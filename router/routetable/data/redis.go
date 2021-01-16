@@ -15,6 +15,14 @@ const (
 	errPrefix      = "redis routeTable"
 )
 
+var (
+	delIfSameScript = redis.NewScript(`
+if redis.call("GET", KEYS[1]) == ARGV[1] then
+    return redis.call("DEL", KEYS[1])
+else
+    return 1
+end`)
+)
 
 type RedisCmdable interface {
 	redis.Cmdable
@@ -93,9 +101,45 @@ func (rt *RedisRouteTable) GetSet(ctx context.Context, key string, addr string, 
 // result - current value (new value when ok=true)
 // err - operation error
 func (rt *RedisRouteTable) SetNx(ctx context.Context, key string, addr string, dur time.Duration) (bool, string, error) {
-	// TODO: implement
+	ctx, cancel := context.WithTimeout(ctx, rt.timeout)
+	defer cancel()
 
-	return false, "", nil
+	cmds, err := rt.rdb.Pipelined(ctx, func(pipeliner redis.Pipeliner) error {
+		pipeliner.SetNX(ctx, key, addr, dur)
+		pipeliner.Get(ctx, key)
+		return nil
+	})
+	if err != nil {
+		return false, "", wrapErr(err, "SetNx", "key", key, "addr", addr)
+	}
+
+	if len(cmds) != 2 {
+		return false, "", wrapErr(errors.New("redis pipeline failed"), "SetNx", "key", key)
+	}
+
+	var ok bool
+	if setCmd, okCmd := cmds[0].(*redis.BoolCmd); okCmd {
+		var errSet error
+		ok, errSet = setCmd.Result()
+		if errSet != nil {
+			return false, "", wrapErr(errSet, "SetNx", "key", key)
+		}
+	} else {
+		return false, "", wrapErr(errors.Errorf("unexpected SETNX response type: %T", cmds[0]), "SetNx", "key", key)
+	}
+
+	var currentValue string
+	if getCmd, okCmd := cmds[1].(*redis.StringCmd); okCmd {
+		val, errGet := getCmd.Result()
+		if errGet != nil && !errors.Is(errGet, redis.Nil) {
+			return false, "", wrapErr(errGet, "SetNx", "key", key)
+		}
+		currentValue = val
+	} else {
+		return false, "", wrapErr(errors.Errorf("unexpected GET response type: %T", cmds[1]), "SetNx", "key", key)
+	}
+
+	return ok, currentValue, nil
 }
 
 func (rt *RedisRouteTable) Load(ctx context.Context, key string) (string, error) {
@@ -134,7 +178,17 @@ func (rt *RedisRouteTable) Del(ctx context.Context, key string) error {
 }
 
 func (rt *RedisRouteTable) DelIfSame(ctx context.Context, key string, value string) error {
-	// TODO: implement
+	ctx, cancel := context.WithTimeout(ctx, rt.timeout)
+	defer cancel()
+
+	result, err := delIfSameScript.Run(ctx, rt.rdb, []string{key}, value).Int64()
+	if err != nil {
+		return wrapErr(err, "DelIfSame", "key", key, "value", value)
+	}
+
+	if result == 0 {
+		return wrapErr(errors.New("redis script execute failed"), "DelIfSame", "key", key, "value", value)
+	}
 	return nil
 }
 

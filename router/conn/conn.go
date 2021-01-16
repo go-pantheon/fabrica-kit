@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/luffy050596/vulcan-pkg-app/metrics"
 	"github.com/luffy050596/vulcan-pkg-app/router/routetable"
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
@@ -20,6 +21,10 @@ func NewConn(serviceName string, balancerType balancer.BalancerType, logger log.
 		kgrpc.WithDiscovery(r),
 		kgrpc.WithMiddleware(
 			recovery.Recovery(),
+			metadata.Client(),
+			tracing.Client(),
+			metrics.Middleware(),
+			logging.Client(logger),
 		),
 	)
 	if err != nil {
