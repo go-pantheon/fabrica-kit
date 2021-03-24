@@ -11,4 +11,5 @@ require (
 	go.opentelemetry.io/otel/trace v0.15.0
 	go.uber.org/zap v1.15.0
 	google.golang.org/grpc v1.34.0
+	gorm.io/gorm v1.20.1
 )
