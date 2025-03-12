@@ -2,6 +2,8 @@ package errors
 
 import (
 	"errors"
+
+	kerrors "github.com/go-kratos/kratos/v2/errors"
 )
 
 // Route table errors

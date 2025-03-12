@@ -7,7 +7,7 @@ import (
 	verrors "github.com/luffy050596/vulcan-pkg-app/errors"
 	"github.com/luffy050596/vulcan-pkg-app/router/routetable"
 	"github.com/pkg/errors"
-	"github.com/redis/go-redis"
+	"github.com/redis/go-redis/v9"
 )
 
 const (

@@ -5,6 +5,10 @@ import (
 	"strconv"
 	"sync"
 
+	"github.com/go-kratos/kratos/v2/log"
+	"github.com/go-kratos/kratos/v2/metadata"
+	"github.com/go-kratos/kratos/v2/selector"
+	"github.com/go-kratos/kratos/v2/selector/node/direct"
 	vctx "github.com/luffy050596/vulcan-pkg-app/context"
 	"github.com/luffy050596/vulcan-pkg-app/router/routetable"
 	"github.com/pkg/errors"
@@ -93,6 +97,8 @@ func (p *Balancer) Pick(ctx context.Context, nodes []selector.WeightedNode) (sel
 		}
 	}
 
+	// select a new node by weight from nodes
+	// the algorithm is the implement of nginx wrr, copied from https://github.com/go-kratos/kratos/blob/main/selector/wrr/wrr.go
 	var (
 		totalWeight  float64
 		selected     selector.WeightedNode
