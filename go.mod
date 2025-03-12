@@ -1,4 +1,4 @@
-module github.com/luffy050596/vulcan-pkg-app
+module github.com/go-pantheon/vulcan-kit
 
 go 1.23.0
 

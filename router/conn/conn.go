@@ -11,9 +11,9 @@ import (
 	"github.com/go-kratos/kratos/v2/middleware/tracing"
 	"github.com/go-kratos/kratos/v2/registry"
 	kgrpc "github.com/go-kratos/kratos/v2/transport/grpc"
-	"github.com/luffy050596/vulcan-pkg-app/metrics"
-	"github.com/luffy050596/vulcan-pkg-app/router/balancer"
-	"github.com/luffy050596/vulcan-pkg-app/router/routetable"
+	"github.com/go-pantheon/vulcan-kit/metrics"
+	"github.com/go-pantheon/vulcan-kit/router/balancer"
+	"github.com/go-pantheon/vulcan-kit/router/routetable"
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
 )

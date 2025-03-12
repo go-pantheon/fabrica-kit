@@ -1,10 +1,10 @@
-# vulcan-frame
+# go-pantheon
 
-**vulcan-frame** is a game server framework that is ready to use. It provides a general server framework for microservices, allowing you to quickly build a high-performance and highly available game server cluster.
+**go-pantheon** is a game server framework that is ready to use. It provides a general server framework for microservices, allowing you to quickly build a high-performance and highly available game server cluster.
 
-## vulcan-pkg-app
+## vulcan-kit
 
-**vulcan-pkg-app** is a package that provides a general function for **vulcan-frame**. It provides the components of routing distribution and load balancing, link tracing, metrics, etc., which can be easily combined into **vulcan-frame**. It is based on [kratos](https://github.com/go-kratos/kratos).
+**vulcan-kit** is a package that provides a general function for **go-pantheon**. It provides the components of routing distribution and load balancing, link tracing, metrics, etc., which can be easily combined into **go-pantheon**. It is based on [kratos](https://github.com/go-kratos/kratos).
 
 ## Components
 
