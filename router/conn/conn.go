@@ -42,7 +42,7 @@ func NewConn(serviceName string, balancerType balancer.BalancerType, logger log.
 			recovery.Recovery(),
 			metadata.Client(),
 			tracing.Client(),
-			metrics.Middleware(),
+			metrics.Client(),
 			logging.Client(logger),
 		),
 	)
