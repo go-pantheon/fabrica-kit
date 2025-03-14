@@ -3,7 +3,7 @@ module github.com/go-pantheon/vulcan-kit
 go 1.23.0
 
 require (
-	github.com/go-kratos/kratos/contrib/log/zap/v2 v2.0.0-20250307161706-982270e9576b
+	github.com/go-kratos/kratos/contrib/log/zap/v2 v2.0.0-20250312125852-142ea0a93a9f
 	github.com/go-kratos/kratos/v2 v2.8.4
 	github.com/pkg/errors v0.9.1
 	github.com/redis/go-redis/v9 v9.7.1
@@ -42,8 +42,8 @@ require (
 	golang.org/x/sync v0.12.0 // indirect
 	golang.org/x/sys v0.31.0 // indirect
 	golang.org/x/text v0.23.0 // indirect
-	google.golang.org/genproto/googleapis/api v0.0.0-20250311190419-81fb87f6b8bf // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20250311190419-81fb87f6b8bf // indirect
+	google.golang.org/genproto/googleapis/api v0.0.0-20250313205543-e70fdf4c4cb4 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20250313205543-e70fdf4c4cb4 // indirect
 	google.golang.org/protobuf v1.36.5 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
