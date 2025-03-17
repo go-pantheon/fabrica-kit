@@ -9,8 +9,8 @@ import (
 	"github.com/go-kratos/kratos/v2/metadata"
 	"github.com/go-kratos/kratos/v2/selector"
 	"github.com/go-kratos/kratos/v2/selector/node/direct"
-	vctx "github.com/go-pantheon/vulcan-kit/context"
-	"github.com/go-pantheon/vulcan-kit/router/routetable"
+	vctx "github.com/go-pantheon/fabrica-kit/context"
+	"github.com/go-pantheon/fabrica-kit/router/routetable"
 	"github.com/pkg/errors"
 )
 

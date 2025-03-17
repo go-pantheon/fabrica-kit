@@ -1,7 +1,7 @@
 package profile
 
 const (
-	ORG_PREFIX = "VULCAN_"
+	ORG_PREFIX = "fabrica_"
 )
 
 const (

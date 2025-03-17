@@ -5,8 +5,8 @@ import (
 
 	"github.com/go-kratos/kratos/v2/metadata"
 	"github.com/go-kratos/kratos/v2/selector"
-	vctx "github.com/go-pantheon/vulcan-kit/context"
-	"github.com/go-pantheon/vulcan-kit/profile"
+	vctx "github.com/go-pantheon/fabrica-kit/context"
+	"github.com/go-pantheon/fabrica-kit/profile"
 )
 
 func NewFilter() selector.NodeFilter {

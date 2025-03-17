@@ -3,7 +3,7 @@ package tunnel
 import (
 	"context"
 
-	"github.com/go-pantheon/vulcan-util/sync"
+	"github.com/go-pantheon/fabrica-util/sync"
 )
 
 type Holder interface {

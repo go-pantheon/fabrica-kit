@@ -3,7 +3,7 @@ package balancer
 import (
 	"sync/atomic"
 
-	"github.com/go-pantheon/vulcan-kit/router/routetable"
+	"github.com/go-pantheon/fabrica-kit/router/routetable"
 )
 
 type BalancerType string

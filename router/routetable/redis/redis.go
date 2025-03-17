@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
-	verrors "github.com/go-pantheon/vulcan-kit/errors"
-	"github.com/go-pantheon/vulcan-kit/router/routetable"
+	verrors "github.com/go-pantheon/fabrica-kit/errors"
+	"github.com/go-pantheon/fabrica-kit/router/routetable"
 	"github.com/pkg/errors"
 	"github.com/redis/go-redis/v9"
 )
