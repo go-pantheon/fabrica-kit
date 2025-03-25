@@ -1,4 +1,4 @@
-package globalvars
+package version
 
 import (
 	"testing"
