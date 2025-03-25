@@ -26,7 +26,7 @@ func NewConn(serviceName string, balancerType balancer.BalancerType, logger log.
 	if balancerType == balancer.BalancerTypeMaster && !balancer.MasterBalancerRegistered.Load() {
 		balancer.RegisterMasterBalancer(rt)
 	}
-	if balancerType == balancer.BalancerTypeReader && !balancer.ReaderBalancerRegistered.Load() {
+	if balancerType == balancer.BalancerTypeViewer && !balancer.ReaderBalancerRegistered.Load() {
 		balancer.RegisterReaderBalancer(rt)
 	}
 

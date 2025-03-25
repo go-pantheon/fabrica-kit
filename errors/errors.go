@@ -34,3 +34,8 @@ var (
 	ErrAPIRequestInvalid  = kerrors.BadRequest("illegal request", "parameter error")
 	ErrAPIPlatformInvalid = kerrors.BadRequest("illegal request", "platform id error")
 )
+
+// DB errors
+var (
+	ErrDBRecordNotFound = errors.New("record not found")
+)

@@ -10,7 +10,7 @@ type BalancerType string
 
 const (
 	BalancerTypeMaster BalancerType = "master"
-	BalancerTypeReader BalancerType = "reader"
+	BalancerTypeViewer BalancerType = "viewer"
 )
 
 var (
@@ -29,7 +29,7 @@ func RegisterMasterBalancer(rt routetable.RouteTable) {
 // RegisterBalancer Register a balancer for reader
 // return the balancer name
 func RegisterReaderBalancer(rt routetable.RouteTable) {
-	t := BalancerTypeReader
+	t := BalancerTypeViewer
 	registerBalancer(t, NewBuilder(WithBalancerType(t), WithRouteTable(rt)))
 	ReaderBalancerRegistered.Store(true)
 }
