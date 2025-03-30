@@ -9,8 +9,8 @@ import (
 	"github.com/go-kratos/kratos/v2/metadata"
 	"github.com/go-kratos/kratos/v2/selector"
 	"github.com/go-kratos/kratos/v2/selector/node/direct"
-	vctx "github.com/go-pantheon/fabrica-kit/context"
 	"github.com/go-pantheon/fabrica-kit/router/routetable"
+	"github.com/go-pantheon/fabrica-kit/xcontext"
 	"github.com/pkg/errors"
 )
 
@@ -151,7 +151,7 @@ func getOIDFromCtx(ctx context.Context) (oid int64, err error) {
 		err = errors.Errorf("metadata not in context")
 		return
 	}
-	if oid, err = strconv.ParseInt(md.Get(vctx.CtxOID), 10, 64); err != nil {
+	if oid, err = strconv.ParseInt(md.Get(xcontext.CtxOID), 10, 64); err != nil {
 		err = errors.Wrapf(err, "oid not int64")
 	}
 	return

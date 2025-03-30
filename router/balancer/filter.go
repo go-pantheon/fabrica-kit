@@ -5,8 +5,8 @@ import (
 
 	"github.com/go-kratos/kratos/v2/metadata"
 	"github.com/go-kratos/kratos/v2/selector"
-	vctx "github.com/go-pantheon/fabrica-kit/context"
 	"github.com/go-pantheon/fabrica-kit/profile"
+	"github.com/go-pantheon/fabrica-kit/xcontext"
 )
 
 func NewFilter() selector.NodeFilter {
@@ -23,7 +23,7 @@ func NewFilter() selector.NodeFilter {
 
 func getColorFromCtx(ctx context.Context) string {
 	if md, ok := metadata.FromServerContext(ctx); ok {
-		return md.Get(vctx.CtxColor)
+		return md.Get(xcontext.CtxColor)
 	}
 	return profile.Color()
 }

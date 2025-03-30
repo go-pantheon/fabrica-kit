@@ -1,4 +1,4 @@
-package errors
+package xerrors
 
 import (
 	"errors"
@@ -37,9 +37,11 @@ var (
 
 // DB errors
 var (
-	ErrDBRecordNotFound = errors.New("record not found")
-	ErrDBRecordExists   = errors.New("record exists")
-	ErrDBRecordVersion  = errors.New("record version error")
-	ErrDBRecordUpdate   = errors.New("record update error")
-	ErrDBRecordType     = errors.New("record type error")
+	ErrDBProtoEncode       = errors.New("db proto encode error")
+	ErrDBProtoDecode       = errors.New("db proto decode error")
+	ErrDBRecordNotFound    = errors.New("record not found")
+	ErrDBRecordExists      = errors.New("record exists")
+	ErrDBRecordVersion     = errors.New("record version error")
+	ErrDBRecordNotAffected = errors.New("record update error")
+	ErrDBRecordType        = errors.New("record type error")
 )

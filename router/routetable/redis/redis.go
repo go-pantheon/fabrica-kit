@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
-	verrors "github.com/go-pantheon/fabrica-kit/errors"
 	"github.com/go-pantheon/fabrica-kit/router/routetable"
+	"github.com/go-pantheon/fabrica-kit/xerrors"
 	"github.com/pkg/errors"
 	"github.com/redis/go-redis/v9"
 )
@@ -56,7 +56,7 @@ func NewRedisRouteTable(rdb RedisCmdable, opts ...Option) *RedisRouteTable {
 
 func wrapErr(err error, operation string, args ...interface{}) error {
 	if errors.Is(err, redis.Nil) {
-		return errors.Wrapf(verrors.ErrRouteTableNotFound,
+		return errors.Wrapf(xerrors.ErrRouteTableNotFound,
 			"%s data not found", operation)
 	}
 	return errors.Wrapf(err, "%s %s failed %v", errPrefix, operation, args)
@@ -149,7 +149,7 @@ func (rt *RedisRouteTable) Load(ctx context.Context, key string) (string, error)
 	result, err := rt.rdb.Get(ctx, key).Result()
 	if err != nil {
 		if errors.Is(err, redis.Nil) {
-			return "", wrapErr(verrors.ErrRouteTableNotFound, "Load", "key", key)
+			return "", wrapErr(xerrors.ErrRouteTableNotFound, "Load", "key", key)
 		}
 		return result, wrapErr(err, "Load", "key", key)
 	}
