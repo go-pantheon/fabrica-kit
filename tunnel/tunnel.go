@@ -3,7 +3,7 @@ package tunnel
 import (
 	"context"
 
-	"github.com/go-pantheon/fabrica-util/sync"
+	"github.com/go-pantheon/fabrica-util/xsync"
 )
 
 type Holder interface {
@@ -16,14 +16,14 @@ type Pusher interface {
 }
 
 type Worker interface {
-	sync.Stoppable
-	sync.CountdownStopper
+	xsync.Stoppable
+	xsync.CountdownStopper
 	Holder
 	Pusher
 }
 
 type Tunnel interface {
-	sync.Stoppable
+	xsync.Stoppable
 	Pusher
 
 	Type() int32
