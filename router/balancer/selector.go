@@ -121,22 +121,23 @@ func (p *Balancer) Pick(ctx context.Context, nodes []selector.WeightedNode) (sel
 
 	d := selected.Pick()
 
+	// the select action is done, return the selected node if the balancer type is not master
 	if p.balancerType != BalancerTypeMaster {
 		return selected, d, nil
 	}
 
-	// update route table if the connector is master
-	// the route table may be set by other connections, so we need to judge it as empty before setting
+	// update route table if the balancer type is master
+	// the route table may be set by other connections at the same time, so we need to judge it with SetNx before setting
 	ok, addr, err := p.routeTable.SetNx(ctx, color, oid, selected.Address())
 	if err != nil {
 		return nil, nil, err
 	}
 	if ok {
-		// the route table is set by this connection
+		// the route table is set by this balancer
 		return selected, d, nil
 	}
 
-	log.Warnf("routeTable is set by other connections. oid=%d color=%s oldConn=%s newConn=%s", oid, color, addr, selected.Address())
+	log.Warnf("routeTable is set by other balancers. oid=%d color=%s oldConn=%s newConn=%s", oid, color, addr, selected.Address())
 	for _, node := range nodes {
 		if node.Address() == addr {
 			return node, nil, nil
