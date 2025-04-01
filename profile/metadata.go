@@ -1,7 +1,7 @@
 package profile
 
 const (
-	ORG_PREFIX = "fabrica_"
+	ORG_PREFIX = "PANTHEON_"
 )
 
 const (
