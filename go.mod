@@ -5,7 +5,7 @@ go 1.23.0
 require (
 	github.com/go-kratos/kratos/contrib/log/zap/v2 v2.0.0-20250312125852-142ea0a93a9f
 	github.com/go-kratos/kratos/v2 v2.8.4
-	github.com/go-pantheon/fabrica-util v0.0.1
+	github.com/go-pantheon/fabrica-util v0.0.3
 	github.com/pkg/errors v0.9.1
 	github.com/redis/go-redis/v9 v9.7.1
 	github.com/stretchr/testify v1.10.0

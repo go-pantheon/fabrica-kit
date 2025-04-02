@@ -45,3 +45,11 @@ var (
 	ErrDBRecordNotAffected = errors.New("record update error")
 	ErrDBRecordType        = errors.New("record type error")
 )
+
+var (
+	ErrAdminPermissionReason   = "permission error"
+	ErrAdminQueryFailedReason  = "query execute failed"
+	ErrAdminUpdateFailedReason = "update failed"
+	ErrAdminParamReason        = "param error"
+	ErrAdminConditionReason    = "condition error"
+)
