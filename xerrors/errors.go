@@ -16,15 +16,6 @@ var (
 	ErrTunnelStopped = errors.New("tunnel stopped")
 )
 
-// User logout errors
-var (
-	ErrLogoutFromUser         = errors.New("user logout")
-	ErrLogoutBanned           = errors.New("banned")
-	ErrLogoutKickOut          = errors.New("kick out")
-	ErrLogoutConflictingLogin = errors.New("conflicting login")
-	ErrLogoutMainTunnelClosed = errors.New("main tunnel closed")
-)
-
 // Client request errors
 var (
 	ErrAPIServerErr       = kerrors.InternalServer("server error", "please try again later")
