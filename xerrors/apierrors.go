@@ -19,6 +19,7 @@ var (
 	ErrAPIPlatformAuthFailed = APIPlatformAuthFailed("default platform auth failed")
 	ErrAPICodecFailed        = APICodecFailed("default codec failed")
 	ErrAPIDBFailed           = APIDBFailed("default db failed")
+	ErrAPIDBNoAffected       = APIDBFailed("default db no affected")
 )
 
 func APIStatusIllegal(message string, a ...any) *errors.Error {
@@ -103,4 +104,11 @@ func APIDBFailed(message string, a ...any) *errors.Error {
 		message = fmt.Sprintf(message, a...)
 	}
 	return errors.InternalServer("DB_FAILED", message)
+}
+
+func APIDBNoAffected(message string, a ...any) *errors.Error {
+	if len(a) > 0 {
+		message = fmt.Sprintf(message, a...)
+	}
+	return errors.Conflict("DB_NO_AFFECTED", message)
 }
