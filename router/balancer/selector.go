@@ -19,26 +19,31 @@ func New(opts ...Option) selector.Selector {
 	return NewBuilder(opts...).Build()
 }
 
+// Option is a function that configures the selector options.
 type Option func(o *options)
 
 type options struct {
-	balancerType BalancerType
+	balancerType Type
 	routeTable   routetable.RouteTable
 }
 
+// WithRouteTable sets the route table for the balancer.
 func WithRouteTable(rt routetable.RouteTable) Option {
 	return func(o *options) {
 		o.routeTable = rt
 	}
 }
-func WithBalancerType(balancerType BalancerType) Option {
+
+// WithBalancerType sets the balancer type.
+func WithBalancerType(balancerType Type) Option {
 	return func(o *options) {
 		o.balancerType = balancerType
 	}
 }
 
+// Builder is a selector builder for creating weighted round-robin balancers.
 type Builder struct {
-	balancerType BalancerType
+	balancerType Type
 	routeTable   routetable.RouteTable
 }
 
@@ -48,6 +53,7 @@ func NewBuilder(opts ...Option) selector.Builder {
 	for _, opt := range opts {
 		opt(&option)
 	}
+
 	return &selector.DefaultBuilder{
 		Balancer: &Builder{
 			balancerType: option.balancerType,
@@ -57,6 +63,7 @@ func NewBuilder(opts ...Option) selector.Builder {
 	}
 }
 
+// Build creates a new balancer instance.
 func (b *Builder) Build() selector.Balancer {
 	return &Balancer{
 		balancerType:  b.balancerType,
@@ -67,8 +74,9 @@ func (b *Builder) Build() selector.Balancer {
 
 var _ selector.Balancer = (*Balancer)(nil)
 
+// Balancer is a weighted round-robin load balancer that supports route tables.
 type Balancer struct {
-	balancerType  BalancerType
+	balancerType  Type
 	mu            sync.Mutex
 	currentWeight map[string]float64
 	routeTable    routetable.RouteTable
@@ -84,6 +92,7 @@ func (p *Balancer) Pick(ctx context.Context, nodes []selector.WeightedNode) (sel
 	if err != nil {
 		return nil, nil, err
 	}
+
 	color := getColorFromCtx(ctx)
 
 	// select node by oid from routeTable
@@ -91,6 +100,7 @@ func (p *Balancer) Pick(ctx context.Context, nodes []selector.WeightedNode) (sel
 	if err != nil {
 		return nil, nil, err
 	}
+
 	for _, node := range nodes {
 		if node.Address() == addr {
 			return node, nil, nil
@@ -106,23 +116,26 @@ func (p *Balancer) Pick(ctx context.Context, nodes []selector.WeightedNode) (sel
 	)
 
 	p.mu.Lock()
+
 	for _, node := range nodes {
 		totalWeight += node.Weight()
 		cwt := p.currentWeight[node.Address()]
 		cwt += node.Weight()
 		p.currentWeight[node.Address()] = cwt
+
 		if selected == nil || selectWeight < cwt {
 			selectWeight = cwt
 			selected = node
 		}
 	}
+
 	p.currentWeight[selected.Address()] = selectWeight - totalWeight
 	p.mu.Unlock()
 
 	d := selected.Pick()
 
 	// the select action is done, return the selected node if the balancer type is not master
-	if p.balancerType != BalancerTypeMaster {
+	if p.balancerType != TypeMaster {
 		return selected, d, nil
 	}
 
@@ -132,17 +145,20 @@ func (p *Balancer) Pick(ctx context.Context, nodes []selector.WeightedNode) (sel
 	if err != nil {
 		return nil, nil, err
 	}
+
 	if ok {
 		// the route table is set by this balancer
 		return selected, d, nil
 	}
 
 	log.Warnf("routeTable is set by other balancers. oid=%d color=%s oldConn=%s newConn=%s", oid, color, addr, selected.Address())
+
 	for _, node := range nodes {
 		if node.Address() == addr {
 			return node, nil, nil
 		}
 	}
+
 	return nil, nil, errors.Errorf("the existed connection in routeTable is not found. oid=%d color=%s oldConn=%s", oid, color, addr)
 }
 
@@ -150,10 +166,13 @@ func getOIDFromCtx(ctx context.Context) (oid int64, err error) {
 	md, ok := metadata.FromServerContext(ctx)
 	if !ok {
 		err = errors.Errorf("metadata not in context")
+
 		return
 	}
+
 	if oid, err = strconv.ParseInt(md.Get(xcontext.CtxOID), 10, 64); err != nil {
 		err = errors.Wrapf(err, "oid not int64")
 	}
+
 	return
 }

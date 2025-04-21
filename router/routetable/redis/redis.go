@@ -1,203 +1,144 @@
+// Package redis provides a Redis-based implementation of the route table.
 package redis
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/go-pantheon/fabrica-kit/router/routetable"
-	"github.com/go-pantheon/fabrica-kit/xerrors"
-	"github.com/pkg/errors"
 	"github.com/redis/go-redis/v9"
 )
 
-const (
-	defaultTimeout = 2 * time.Second
-	errPrefix      = "redis routeTable"
-)
+var _ routetable.Data = (*RouteTable)(nil)
 
-var (
-	delIfSameScript = redis.NewScript(`
-if redis.call("GET", KEYS[1]) == ARGV[1] then
-    return redis.call("DEL", KEYS[1])
-else
-    return 1
-end`)
-)
-
-type RedisCmdable interface {
-	redis.Cmdable
+// Cmdable is an interface that represents Redis command execution capability.
+type Cmdable interface {
+	Set(ctx context.Context, key string, value interface{}, expiration time.Duration) *redis.StatusCmd
+	Get(ctx context.Context, key string) *redis.StringCmd
+	Del(ctx context.Context, keys ...string) *redis.IntCmd
+	GetSet(ctx context.Context, key string, value interface{}) *redis.StringCmd
+	SetNX(ctx context.Context, key string, value interface{}, expiration time.Duration) *redis.BoolCmd
+	Expire(ctx context.Context, key string, expiration time.Duration) *redis.BoolCmd
 }
 
-var _ routetable.RouteTableData = (*RedisRouteTable)(nil)
+// RouteTable implements the routetable.Data interface using Redis.
+type RouteTable struct {
+	client Cmdable
+}
 
-type Option func(*RedisRouteTable)
-
-func WithTimeout(dur time.Duration) Option {
-	return func(r *RedisRouteTable) {
-		r.timeout = dur
+// New creates a new Redis-based route table data store.
+func New(client Cmdable) *RouteTable {
+	return &RouteTable{
+		client: client,
 	}
 }
 
-type RedisRouteTable struct {
-	rdb     RedisCmdable
-	timeout time.Duration
+// Set stores a key-value pair in Redis with an expiration time.
+func (r *RouteTable) Set(ctx context.Context, key, val string, expire time.Duration) error {
+	return r.client.Set(ctx, key, val, expire).Err()
 }
 
-func NewRedisRouteTable(rdb RedisCmdable, opts ...Option) *RedisRouteTable {
-	rt := &RedisRouteTable{
-		rdb:     rdb,
-		timeout: defaultTimeout,
-	}
-	for _, opt := range opts {
-		opt(rt)
-	}
-	return rt
+// Load retrieves a value from Redis by key.
+func (r *RouteTable) Load(ctx context.Context, key string) (string, error) {
+	return r.client.Get(ctx, key).Result()
 }
 
-func wrapErr(err error, operation string, args ...interface{}) error {
-	if errors.Is(err, redis.Nil) {
-		return errors.Wrapf(xerrors.ErrRouteTableNotFound,
-			"%s data not found", operation)
-	}
-	return errors.Wrapf(err, "%s %s failed %v", errPrefix, operation, args)
+// Del deletes a key from Redis.
+func (r *RouteTable) Del(ctx context.Context, key string) error {
+	return r.client.Del(ctx, key).Err()
 }
 
-func (rt *RedisRouteTable) Set(ctx context.Context, key string, addr string, dur time.Duration) error {
-	ctx, cancel := context.WithTimeout(ctx, rt.timeout)
-	defer cancel()
-
-	if err := rt.rdb.SetEx(ctx, key, addr, dur).Err(); err != nil {
-		return wrapErr(err, "Set", "key", key, "addr", addr)
-	}
-	return nil
-}
-
-func (rt *RedisRouteTable) GetSet(ctx context.Context, key string, addr string, dur time.Duration) (string, error) {
-	ctx, cancel := context.WithTimeout(ctx, rt.timeout)
-	defer cancel()
-
-	var old string
-	cmders, err := rt.rdb.Pipelined(ctx, func(pipeliner redis.Pipeliner) error {
-		pipeliner.GetSet(ctx, key, addr)
-		pipeliner.Expire(ctx, key, dur)
-		return nil
-	})
-
-	if err := wrapErr(err, "GetSet", "key", key, "addr", addr); err != nil {
+// GetSet atomically sets a new value and returns the old value.
+func (r *RouteTable) GetSet(ctx context.Context, key, val string, expire time.Duration) (string, error) {
+	cmd := r.client.GetSet(ctx, key, val)
+	if err := cmd.Err(); err != nil {
 		return "", err
 	}
 
-	for _, cmder := range cmders {
-		if cmd, ok := cmder.(*redis.StringCmd); ok && cmd.Name() == "getset" {
-			old = cmd.Val()
-			break
-		}
+	if err := r.client.Expire(ctx, key, expire).Err(); err != nil {
+		return "", err
 	}
-	return old, nil
+
+	return cmd.Val(), nil
 }
 
-// SetNx sets the value if not exists with expiration, returns:
-// ok - true when key was set
-// result - current value (new value when ok=true)
-// err - operation error
-func (rt *RedisRouteTable) SetNx(ctx context.Context, key string, addr string, dur time.Duration) (bool, string, error) {
-	ctx, cancel := context.WithTimeout(ctx, rt.timeout)
-	defer cancel()
-
-	cmds, err := rt.rdb.Pipelined(ctx, func(pipeliner redis.Pipeliner) error {
-		pipeliner.SetNX(ctx, key, addr, dur)
-		pipeliner.Get(ctx, key)
-		return nil
-	})
+// SetNx sets a key-value pair only if the key does not exist.
+func (r *RouteTable) SetNx(ctx context.Context, key, val string, expire time.Duration) (bool, string, error) {
+	ok, err := r.client.SetNX(ctx, key, val, expire).Result()
 	if err != nil {
-		return false, "", wrapErr(err, "SetNx", "key", key, "addr", addr)
+		return false, "", err
 	}
 
-	if len(cmds) != 2 {
-		return false, "", wrapErr(errors.New("redis pipeline failed"), "SetNx", "key", key)
+	if !ok {
+		v, err := r.client.Get(ctx, key).Result()
+		return false, v, err
 	}
 
-	var ok bool
-	if setCmd, okCmd := cmds[0].(*redis.BoolCmd); okCmd {
-		var errSet error
-		ok, errSet = setCmd.Result()
-		if errSet != nil {
-			return false, "", wrapErr(errSet, "SetNx", "key", key)
-		}
-	} else {
-		return false, "", wrapErr(errors.Errorf("unexpected SETNX response type: %T", cmds[0]), "SetNx", "key", key)
-	}
-
-	var currentValue string
-	if getCmd, okCmd := cmds[1].(*redis.StringCmd); okCmd {
-		val, errGet := getCmd.Result()
-		if errGet != nil && !errors.Is(errGet, redis.Nil) {
-			return false, "", wrapErr(errGet, "SetNx", "key", key)
-		}
-		currentValue = val
-	} else {
-		return false, "", wrapErr(errors.Errorf("unexpected GET response type: %T", cmds[1]), "SetNx", "key", key)
-	}
-
-	return ok, currentValue, nil
+	return true, val, nil
 }
 
-func (rt *RedisRouteTable) Load(ctx context.Context, key string) (string, error) {
-	ctx, cancel := context.WithTimeout(ctx, rt.timeout)
-	defer cancel()
-
-	result, err := rt.rdb.Get(ctx, key).Result()
+// LoadAndExpire loads a value and resets its expiration time.
+func (r *RouteTable) LoadAndExpire(ctx context.Context, key string, expire time.Duration) (string, error) {
+	val, err := r.client.Get(ctx, key).Result()
 	if err != nil {
+		return "", err
+	}
+
+	if err := r.client.Expire(ctx, key, expire).Err(); err != nil {
+		return "", err
+	}
+
+	return val, nil
+}
+
+// Expire sets an expiration time for a key.
+func (r *RouteTable) Expire(ctx context.Context, key string, expire time.Duration) error {
+	return r.client.Expire(ctx, key, expire).Err()
+}
+
+// DelIfSame deletes a key only if its current value matches the specified value.
+func (r *RouteTable) DelIfSame(ctx context.Context, key, expect string) error {
+	txf := func(tx *redis.Tx) error {
+		v, err := tx.Get(ctx, key).Result()
 		if errors.Is(err, redis.Nil) {
-			return "", wrapErr(xerrors.ErrRouteTableNotFound, "Load", "key", key)
+			return nil
 		}
-		return result, wrapErr(err, "Load", "key", key)
-	}
-	return result, nil
-}
 
-func (rt *RedisRouteTable) LoadAndExpire(ctx context.Context, key string, dur time.Duration) (string, error) {
-	ctx, cancel := context.WithTimeout(ctx, rt.timeout)
-	defer cancel()
+		if err != nil {
+			return err
+		}
 
-	result, err := rt.rdb.GetEx(ctx, key, dur).Result()
-	if err != nil {
-		return "", wrapErr(err, "LoadAndExpire", "key", key)
-	}
-	return result, nil
-}
+		if v != expect {
+			return nil
+		}
 
-func (rt *RedisRouteTable) Del(ctx context.Context, key string) error {
-	ctx, cancel := context.WithTimeout(ctx, rt.timeout)
-	defer cancel()
+		_, err = tx.Del(ctx, key).Result()
 
-	if err := rt.rdb.Del(ctx, key).Err(); err != nil {
-		return wrapErr(err, "Del", "key", key)
-	}
-	return nil
-}
-
-func (rt *RedisRouteTable) DelIfSame(ctx context.Context, key string, value string) error {
-	ctx, cancel := context.WithTimeout(ctx, rt.timeout)
-	defer cancel()
-
-	result, err := delIfSameScript.Run(ctx, rt.rdb, []string{key}, value).Int64()
-	if err != nil {
-		return wrapErr(err, "DelIfSame", "key", key, "value", value)
+		return err
 	}
 
-	if result == 0 {
-		return wrapErr(errors.New("redis script execute failed"), "DelIfSame", "key", key, "value", value)
-	}
-	return nil
-}
+	// NOTE: Some Redis client implementations might not support TxPipeline directly.
+	// In those cases, an error will be returned and you may need to
+	// implement a custom transaction mechanism or use a different approach.
+	client, ok := r.client.(*redis.Client)
+	if !ok {
+		// Fallback for non-redis.Client types
+		val, err := r.client.Get(ctx, key).Result()
+		if errors.Is(err, redis.Nil) {
+			return nil
+		}
 
-func (rt *RedisRouteTable) Expire(ctx context.Context, key string, expiration time.Duration) error {
-	ctx, cancel := context.WithTimeout(ctx, rt.timeout)
-	defer cancel()
+		if err != nil {
+			return err
+		}
 
-	if err := rt.rdb.Expire(ctx, key, expiration).Err(); err != nil {
-		return wrapErr(err, "Expire", "key", key)
+		if val != expect {
+			return nil
+		}
+
+		return r.client.Del(ctx, key).Err()
 	}
-	return nil
+
+	return client.Watch(ctx, txf, key)
 }

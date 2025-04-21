@@ -24,7 +24,9 @@ var (
 	// ErrInterfaceLookup is returned when network interfaces cannot be enumerated.
 	ErrInterfaceLookup = errors.New("failed to lookup network interfaces")
 
-	ErrInvalidIPFormat       = errors.New("invalid IP format")
+	// ErrInvalidIPFormat is returned when an IP address has invalid format.
+	ErrInvalidIPFormat = errors.New("invalid IP format")
+	// ErrIPComponentOutOfRange is returned when an IP component is out of valid range.
 	ErrIPComponentOutOfRange = errors.New("IP component out of range")
 )
 
@@ -69,7 +71,7 @@ func InternalIP() string {
 func Extract(hostPort string, lis net.Listener) (string, error) {
 	addr, port, err := net.SplitHostPort(hostPort)
 	if err != nil {
-		return "", fmt.Errorf("%w: %v", ErrInvalidHostPort, err)
+		return "", fmt.Errorf("%w: %w", ErrInvalidHostPort, err)
 	}
 
 	// Use the listener's port if available
@@ -87,7 +89,7 @@ func Extract(hostPort string, lis net.Listener) (string, error) {
 	// Otherwise, find a private IP address
 	ifaces, err := net.Interfaces()
 	if err != nil {
-		return "", fmt.Errorf("%w: %v", ErrInterfaceLookup, err)
+		return "", fmt.Errorf("%w: %w", ErrInterfaceLookup, err)
 	}
 
 	for _, iface := range ifaces {

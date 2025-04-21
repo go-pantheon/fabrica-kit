@@ -1,3 +1,5 @@
+// Package routetable provides functionality for distributed routing tables
+// used for tracking and managing service instances and their connection states.
 package routetable
 
 import (
@@ -6,6 +8,8 @@ import (
 	"time"
 )
 
+// RouteTable is an interface for managing routing table entries.
+// It provides methods for storing, retrieving, and manipulating route information.
 type RouteTable interface {
 	ReadOnlyRouteTable
 
@@ -18,22 +22,25 @@ type RouteTable interface {
 	Del(ctx context.Context, color string, key int64) error
 }
 
+// ReadOnlyRouteTable is an interface for read-only access to the routing table.
 type ReadOnlyRouteTable interface {
 	Load(ctx context.Context, color string, key int64) (addr string, err error)
 }
 
-type RouteTableData interface {
+// Data is an interface for the underlying data storage of route tables.
+type Data interface {
 	Load(ctx context.Context, key string) (addr string, err error)
-	LoadAndExpire(ctx context.Context, key string, dur time.Duration) (string, error)
-	Set(ctx context.Context, key string, addr string, dur time.Duration) error
-	GetSet(ctx context.Context, key string, addr string, dur time.Duration) (old string, err error)
-	SetNx(ctx context.Context, key string, addr string, dur time.Duration) (ok bool, result string, err error)
-	Expire(ctx context.Context, key string, expiration time.Duration) error
-	DelIfSame(ctx context.Context, key string, value string) error
+	LoadAndExpire(ctx context.Context, key string, ttl time.Duration) (addr string, err error)
+	SetNx(ctx context.Context, key, addr string, ttl time.Duration) (bool, string, error)
+	GetSet(ctx context.Context, key, addr string, ttl time.Duration) (string, error)
+	Set(ctx context.Context, key, addr string, ttl time.Duration) error
 	Del(ctx context.Context, key string) error
+	DelIfSame(ctx context.Context, key, value string) error
+	Expire(ctx context.Context, key string, expiration time.Duration) error
 }
 
-func NewRouteTable(name string, rt RouteTableData, opts ...Option) RouteTable {
+// NewRouteTable creates a new RouteTable instance with the specified name and data store.
+func NewRouteTable(name string, rt Data, opts ...Option) RouteTable {
 	return NewBaseRouteTable(rt, name, key, opts...)
 }
 

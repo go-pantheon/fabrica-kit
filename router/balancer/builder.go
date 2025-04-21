@@ -1,3 +1,5 @@
+// Package balancer provides gRPC load balancing functionality
+// for service discovery and routing in distributed systems.
 package balancer
 
 import (
@@ -15,7 +17,7 @@ var (
 	_ balancer.Picker    = (*balancerPicker)(nil)
 )
 
-func registerBalancer(balancerType BalancerType, builder selector.Builder) {
+func registerBalancer(balancerType Type, builder selector.Builder) {
 	b := base.NewBalancerBuilder(
 		string(balancerType),
 		&balancerBuilder{
@@ -36,7 +38,9 @@ func (b *balancerBuilder) Build(info base.PickerBuildInfo) balancer.Picker {
 		// Block the RPC until a new picker is available via UpdateState().
 		return base.NewErrPicker(balancer.ErrNoSubConnAvailable)
 	}
+
 	nodes := make([]selector.Node, 0, len(info.ReadySCs))
+
 	for conn, info := range info.ReadySCs {
 		ins, _ := info.Address.Attributes.Value("rawServiceInstance").(*registry.ServiceInstance)
 		nodes = append(nodes, &grpcNode{
@@ -44,10 +48,12 @@ func (b *balancerBuilder) Build(info base.PickerBuildInfo) balancer.Picker {
 			subConn: conn,
 		})
 	}
+
 	p := &balancerPicker{
 		selector: b.builder.Build(),
 	}
 	p.selector.Apply(nodes)
+
 	return p
 }
 
@@ -59,6 +65,7 @@ type balancerPicker struct {
 // Pick pick instances.
 func (p *balancerPicker) Pick(info balancer.PickInfo) (balancer.PickResult, error) {
 	var filters []selector.NodeFilter
+
 	if tr, ok := transport.FromClientContext(info.Ctx); ok {
 		if gtr, ok := tr.(*grpc.Transport); ok {
 			filters = gtr.NodeFilters()
@@ -92,6 +99,7 @@ func (t Trailer) Get(k string) string {
 	if len(v) > 0 {
 		return v[0]
 	}
+
 	return ""
 }
 

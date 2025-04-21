@@ -34,3 +34,10 @@ Thumbs.db
 *.swp
 
 *.log
+
+# license files
+licenses/
+license-check-warnings.log
+license-dependencies.csv
+third-party-licenses.*
+DEPENDENCIES.md

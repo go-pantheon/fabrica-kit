@@ -1,3 +1,5 @@
+// Package trace provides OpenTelemetry tracing functionality for various
+// components, including GORM database operations and HTTP requests.
 package trace
 
 import (
@@ -18,50 +20,64 @@ var gormTracer = otel.Tracer("gorm.io/gorm")
 
 var _ gorm.Plugin = &GormTracingPlugin{}
 
+// GormTracingPlugin is a GORM plugin that adds OpenTelemetry tracing to database operations.
 type GormTracingPlugin struct{}
 
+// Name returns the name of the plugin.
 func (op *GormTracingPlugin) Name() string {
 	return "tracking_plugin"
 }
 
+// Initialize sets up the necessary callbacks for tracing GORM operations.
 func (op *GormTracingPlugin) Initialize(db *gorm.DB) (err error) {
 	if err = db.Callback().Create().Before("gorm:before_create").Register(callBackBeforeName, before); err != nil {
-		return errors.Wrapf(err, "gorm before_create register tracing error.")
+		return errors.Wrapf(err, "gorm before_create register tracing error")
 	}
+
 	if err = db.Callback().Query().Before("gorm:query").Register(callBackBeforeName, before); err != nil {
-		return errors.Wrapf(err, "gorm query register tracing error.")
+		return errors.Wrapf(err, "gorm query register tracing error")
 	}
+
 	if err = db.Callback().Delete().Before("gorm:before_delete").Register(callBackBeforeName, before); err != nil {
-		return errors.Wrapf(err, "gorm before_delete register tracing error.")
+		return errors.Wrapf(err, "gorm before_delete register tracing error")
 	}
+
 	if err = db.Callback().Update().Before("gorm:setup_reflect_value").Register(callBackBeforeName, before); err != nil {
-		return errors.Wrapf(err, "gorm setup_reflect_value register tracing error.")
+		return errors.Wrapf(err, "gorm setup_reflect_value register tracing error")
 	}
+
 	if err = db.Callback().Row().Before("gorm:row").Register(callBackBeforeName, before); err != nil {
-		return errors.Wrapf(err, "gorm row register tracing error.")
+		return errors.Wrapf(err, "gorm row register tracing error")
 	}
+
 	if err = db.Callback().Raw().Before("gorm:raw").Register(callBackBeforeName, before); err != nil {
-		return errors.Wrapf(err, "gorm raw_ register tracing error.")
+		return errors.Wrapf(err, "gorm raw_ register tracing error")
 	}
 
 	if err = db.Callback().Create().After("gorm:after_create").Register(callBackAfterName, after); err != nil {
-		return errors.Wrapf(err, "gorm after_create register tracing error.")
+		return errors.Wrapf(err, "gorm after_create register tracing error")
 	}
+
 	if err = db.Callback().Query().After("gorm:after_query").Register(callBackAfterName, after); err != nil {
-		return errors.Wrapf(err, "gorm after_query register tracing error.")
+		return errors.Wrapf(err, "gorm after_query register tracing error")
 	}
+
 	if err = db.Callback().Delete().After("gorm:after_delete").Register(callBackAfterName, after); err != nil {
-		return errors.Wrapf(err, "gorm after_delete register tracing error.")
+		return errors.Wrapf(err, "gorm after_delete register tracing error")
 	}
+
 	if err = db.Callback().Update().After("gorm:after_update").Register(callBackAfterName, after); err != nil {
-		return errors.Wrapf(err, "gorm after_update register tracing error.")
+		return errors.Wrapf(err, "gorm after_update register tracing error")
 	}
+
 	if err = db.Callback().Row().After("gorm:row").Register(callBackAfterName, after); err != nil {
-		return errors.Wrapf(err, "gorm row register tracing error.")
+		return errors.Wrapf(err, "gorm row register tracing error")
 	}
+
 	if err = db.Callback().Raw().After("gorm:raw").Register(callBackAfterName, after); err != nil {
-		return errors.Wrapf(err, "gorm raw_ register tracing error.")
+		return errors.Wrapf(err, "gorm raw_ register tracing error")
 	}
+
 	return nil
 }
 
@@ -82,7 +98,7 @@ func after(db *gorm.DB) {
 	span := trace.SpanFromContext(db.Statement.Context)
 	defer span.End()
 
-	if err := db.Error; err != nil && err != gorm.ErrRecordNotFound {
+	if err := db.Error; err != nil && errors.Is(err, gorm.ErrRecordNotFound) {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 	}

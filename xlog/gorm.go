@@ -12,6 +12,8 @@ import (
 	"gorm.io/gorm/utils"
 )
 
+// WithGorm creates a GORM logger adapter using the provided Kratos logger.
+// It configures SQL query logging with formatting based on the provided config.
 func WithGorm(l *log.Helper, config logger.Config) logger.Interface {
 	var (
 		infoStr      = "%s\n[INFO] "
@@ -45,6 +47,8 @@ func WithGorm(l *log.Helper, config logger.Config) logger.Interface {
 
 var _ logger.Interface = (*Logger)(nil)
 
+// Logger is a GORM logger implementation that uses a Kratos logger.
+// It supports formatted output with configurable log levels and colorization.
 type Logger struct {
 	logger.Writer
 	logger.Config
@@ -63,6 +67,7 @@ type Logger struct {
 func (l *Logger) LogMode(level logger.LogLevel) logger.Interface {
 	newLogger := *l
 	newLogger.LogLevel = level
+
 	return &newLogger
 }
 
@@ -84,9 +89,11 @@ func (l *Logger) Error(ctx context.Context, msg string, data ...interface{}) {
 // Trace print sql message
 func (l *Logger) Trace(ctx context.Context, begin time.Time, fc func() (string, int64), err error) {
 	elapsed := time.Since(begin)
+
 	switch {
 	case err != nil && (!errors.Is(err, gorm.ErrRecordNotFound) || !l.IgnoreRecordNotFoundError):
 		sql, rows := fc()
+
 		if rows == -1 {
 			l.log.WithContext(ctx).Errorf(l.traceErrStr, utils.FileWithLineNum(), err, float64(elapsed.Nanoseconds())/1e6, "-", sql)
 		} else {
@@ -95,6 +102,7 @@ func (l *Logger) Trace(ctx context.Context, begin time.Time, fc func() (string, 
 	case elapsed > l.SlowThreshold && l.SlowThreshold != 0:
 		sql, rows := fc()
 		slowLog := fmt.Sprintf("SLOW SQL >= %v", l.SlowThreshold)
+
 		if rows == -1 {
 			l.log.WithContext(ctx).Warnf(l.traceWarnStr, utils.FileWithLineNum(), slowLog, float64(elapsed.Nanoseconds())/1e6, "-", sql)
 		} else {
@@ -102,6 +110,7 @@ func (l *Logger) Trace(ctx context.Context, begin time.Time, fc func() (string, 
 		}
 	default:
 		sql, rows := fc()
+
 		if rows == -1 {
 			l.log.WithContext(ctx).Infof(l.traceStr, utils.FileWithLineNum(), float64(elapsed.Nanoseconds())/1e6, "-", sql)
 		} else {

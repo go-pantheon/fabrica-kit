@@ -1,3 +1,5 @@
+// Package conn provides utilities for managing gRPC client connections
+// with load balancing, service discovery, and middleware support.
 package conn
 
 import (
@@ -18,15 +20,20 @@ import (
 	"google.golang.org/grpc"
 )
 
+// Conn is a wrapper around a gRPC client connection interface.
 type Conn struct {
 	grpc.ClientConnInterface
 }
 
-func NewConn(serviceName string, balancerType balancer.BalancerType, logger log.Logger, rt routetable.RouteTable, r registry.Discovery) (*Conn, error) {
-	if balancerType == balancer.BalancerTypeMaster && !balancer.MasterBalancerRegistered.Load() {
+// NewConn creates a new gRPC client connection with the specified service name, balancer type,
+// logger, route table, and discovery mechanism.
+// It configures the connection with appropriate middleware and balancer settings.
+func NewConn(serviceName string, balancerType balancer.Type, logger log.Logger, rt routetable.RouteTable, r registry.Discovery) (*Conn, error) {
+	if balancerType == balancer.TypeMaster && !balancer.MasterBalancerRegistered.Load() {
 		balancer.RegisterMasterBalancer(rt)
 	}
-	if balancerType == balancer.BalancerTypeViewer && !balancer.ReaderBalancerRegistered.Load() {
+
+	if balancerType == balancer.TypeReader && !balancer.ReaderBalancerRegistered.Load() {
 		balancer.RegisterReaderBalancer(rt)
 	}
 
@@ -49,5 +56,6 @@ func NewConn(serviceName string, balancerType balancer.BalancerType, logger log.
 	if err != nil {
 		return nil, errors.Wrapf(err, "create grpc connection failed. app=%s", serviceName)
 	}
+
 	return &Conn{ClientConnInterface: conn}, nil
 }

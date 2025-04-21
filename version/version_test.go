@@ -7,6 +7,8 @@ import (
 )
 
 func TestGetSubVersion(t *testing.T) {
+	t.Parallel()
+
 	cases := []struct {
 		v         string
 		az        string
@@ -27,19 +29,19 @@ func TestGetSubVersion(t *testing.T) {
 			"us-v0.1", "us", []int64{0, 1}, true,
 		},
 		{
-			"us-v1.0.1", "us", []int64{0, 0}, false,
+			"us-v1.0.1", "", nil, false,
 		},
 		{
-			"us-1.0", "us", []int64{0, 0}, false,
+			"us-1.0", "", nil, false,
 		},
 		{
-			"us-v1", "us", []int64{0, 0}, false,
+			"us-v1", "", nil, false,
 		},
 		{
-			"v1.0", "", []int64{0, 0}, false,
+			"v1.0", "", nil, false,
 		},
 		{
-			"v1", "", []int64{0, 0}, false,
+			"v1", "", nil, false,
 		},
 	}
 
@@ -49,5 +51,4 @@ func TestGetSubVersion(t *testing.T) {
 		assert.Equal(t, c.sv, sv)
 		assert.Equal(t, c.isRelease, isRelease)
 	}
-
 }

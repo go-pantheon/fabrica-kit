@@ -11,6 +11,9 @@ import (
 	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
 )
 
+// Init initializes the OpenTelemetry trace provider with the specified configuration.
+// It sets up an exporter to the provided URL and configures the tracer with service name,
+// profile, and color attributes.
 func Init(url string, name string, profile, color string) error {
 	exporter, err := otlptracehttp.New(context.Background(),
 		otlptracehttp.WithEndpoint(url),
@@ -19,6 +22,7 @@ func Init(url string, name string, profile, color string) error {
 	if err != nil {
 		return err
 	}
+
 	tp := tracesdk.NewTracerProvider(
 		tracesdk.WithSampler(tracesdk.ParentBased(tracesdk.TraceIDRatioBased(1.0))),
 		tracesdk.WithBatcher(exporter),

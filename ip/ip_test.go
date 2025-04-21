@@ -12,6 +12,8 @@ import (
 
 // TestInternalIP test internal ip detection
 func TestInternalIP(t *testing.T) {
+	t.Parallel()
+
 	ip := InternalIP()
 
 	// IP should not be empty, but this depends on the test environment
@@ -28,6 +30,8 @@ func TestInternalIP(t *testing.T) {
 
 // TestExtract test ip address and port extraction
 func TestExtract(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name     string
 		hostPort string
@@ -80,20 +84,26 @@ func TestExtract(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			var lis net.Listener
 			if tt.listener != nil {
 				lis = tt.listener()
-				defer lis.Close()
+				defer func() {
+					_ = lis.Close()
+				}()
 			}
 
 			got, err := Extract(tt.hostPort, lis)
 			if tt.wantErr {
 				assert.Error(t, err)
+
 				if tt.errType != nil {
 					assert.ErrorIs(t, err, tt.errType)
 				}
 			} else {
 				assert.NoError(t, err)
+
 				if tt.want != "" {
 					assert.Equal(t, tt.want, got)
 				} else {
@@ -113,6 +123,8 @@ func TestExtract(t *testing.T) {
 
 // TestPort test port extraction from listener
 func TestPort(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name     string
 		listener func() net.Listener
@@ -148,12 +160,14 @@ func TestPort(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			var lis net.Listener
 			if tt.listener != nil {
 				lis = tt.listener()
 				defer func() {
 					if tcpLis, ok := lis.(*net.TCPListener); ok {
-						tcpLis.Close()
+						_ = tcpLis.Close()
 					}
 				}()
 			}
@@ -188,6 +202,8 @@ func (m *mockUnixListener) Addr() net.Addr {
 
 // TestIsPrivateIP test if ip is private
 func TestIsPrivateIP(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name string
 		addr string
@@ -210,6 +226,8 @@ func TestIsPrivateIP(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			got := isPrivateIP(tt.addr)
 			assert.Equal(t, tt.want, got)
 		})
@@ -218,6 +236,8 @@ func TestIsPrivateIP(t *testing.T) {
 
 // TestGetClientIP test ip extraction from context
 func TestGetClientIP(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name    string
 		headers map[string]string
@@ -273,6 +293,8 @@ func TestGetClientIP(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			var ctx context.Context
 			if tt.name == "nil context" {
 				ctx = nil
@@ -297,6 +319,7 @@ func (m *mockTransport) Add(key, value string) {
 	if m.headers == nil {
 		m.headers = make(map[string]string)
 	}
+
 	m.headers[key] = value
 }
 
@@ -328,6 +351,7 @@ func (m *mockTransport) Set(key, value string) {
 	if m.headers == nil {
 		m.headers = make(map[string]string)
 	}
+
 	m.headers[key] = value
 }
 
@@ -336,6 +360,7 @@ func (m *mockTransport) Keys() []string {
 	for k := range m.headers {
 		keys = append(keys, k)
 	}
+
 	return keys
 }
 
@@ -344,6 +369,7 @@ func (m *mockTransport) Values(key string) []string {
 	if value, ok := m.headers[key]; ok {
 		return []string{value}
 	}
+
 	return nil
 }
 
@@ -351,5 +377,6 @@ func (m *mockTransport) Values(key string) []string {
 func mockServerContext(headers map[string]string) context.Context {
 	mt := &mockTransport{headers: headers}
 	ctx := context.Background()
+
 	return transport.NewServerContext(ctx, mt)
 }

@@ -1,3 +1,5 @@
+// Package xlog provides extended logging functionality using structured loggers
+// with support for multiple log formats, levels, and integration with tracing.
 package xlog
 
 import (
@@ -11,10 +13,15 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
+// MsgKey is the key used for storing message content in structured logs.
 const MsgKey = "msg"
 
+// Init initializes and configures a logger with the specified parameters.
+// It sets up consistent logging with metadata like profile, color, service name,
+// version, node name, and trace identifiers. Returns the configured logger.
 func Init(logType, logLevel string, profile, color, name, version string, nodeName string) (logger log.Logger) {
 	var base log.Logger
+
 	switch logType {
 	case "zap":
 		base = newZapLogger(logLevel)
@@ -34,6 +41,7 @@ func Init(logType, logLevel string, profile, color, name, version string, nodeNa
 		"span", tracing.SpanID(),
 	)
 	log.SetLogger(logger)
+
 	return
 }
 
@@ -46,7 +54,9 @@ func newZapLogger(logLevel string) log.Logger {
 		EncodeTime:     zapcore.ISO8601TimeEncoder,
 		EncodeDuration: zapcore.StringDurationEncoder,
 	}
+
 	var level zapcore.Level
+
 	switch logLevel {
 	case "debug":
 		level = zapcore.DebugLevel
@@ -59,9 +69,11 @@ func newZapLogger(logLevel string) log.Logger {
 	default:
 		level = zapcore.InfoLevel
 	}
+
 	core := zapcore.NewCore(zapcore.NewJSONEncoder(encoderCfg), zapcore.NewMultiWriteSyncer(
 		zapcore.AddSync(os.Stdout),
 	), level)
 	zlogger := zap.New(core).WithOptions(zap.AddCaller())
+
 	return kzap.NewLogger(zlogger)
 }
