@@ -2,6 +2,8 @@
 
 Fabrica Kit is a core toolkit library for the go-pantheon ecosystem, providing essential functionalities and integrations for building robust game server microservices. This kit builds upon the go-pantheon infrastructure to offer standardized components for logging, error handling, tracing, routing, and more.
 
+For more, please check out: [deepwiki/go-pantheon/fabrica-kit](https://deepwiki.com/go-pantheon/fabrica-kit)
+
 ## go-pantheon Ecosystem
 
 **go-pantheon** is a high-performance, highly available game server cluster solution framework based on [go-kratos](https://github.com/go-kratos/kratos). Fabrica Kit, as a framework toolkit, provides support for the following core components:
