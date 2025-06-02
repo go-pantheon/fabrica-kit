@@ -7,7 +7,7 @@ require (
 	github.com/go-kratos/kratos/v2 v2.8.4
 	github.com/go-pantheon/fabrica-util v0.0.11
 	github.com/pkg/errors v0.9.1
-	github.com/redis/go-redis/v9 v9.7.3
+	github.com/redis/go-redis/v9 v9.9.0
 	github.com/stretchr/testify v1.10.0
 	go.opentelemetry.io/otel v1.35.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.35.0
