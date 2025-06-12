@@ -31,6 +31,11 @@ test:
 vet:
 	go vet ./...
 
+.PHONY: lint
+# Run lint
+lint:
+	golangci-lint run ./...
+
 .PHONY: license-check
 # Check licenses of dependencies
 license-check:

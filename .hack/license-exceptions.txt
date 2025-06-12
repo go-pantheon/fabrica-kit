@@ -6,7 +6,7 @@
 # Note: Adding exceptions should be done carefully and with sufficient justification
 
 # Project's own packages don't need to be checked
-github.com/go-pantheon/fabrica-kit
+github.com/go-pantheon/fabrica-util
 
 # Dependencies containing assembly code that cannot be fully checked
 # These contain ARM64 assembly optimized code, go-licenses cannot analyze their dependencies

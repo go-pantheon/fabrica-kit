@@ -18,7 +18,7 @@ Currently allowed license types:
 - ISC
 - MPL-2.0
 
-To modify the whitelist, edit the `ALLOWED_LICENSES` array in the `hack/licenses-check` script.
+To modify the whitelist, edit the `ALLOWED_LICENSES` array in the `./.hack/licenses-check` script.
 
 ## Available Commands
 
@@ -79,4 +79,4 @@ This warning typically appears when:
 - The script automatically filters these warnings, logging them to the `license-check-warnings.log` file
 - For more precise URLs, create release tags (git tag) for the project, then rerun the check
 - **Automatically ignore the project itself**: The script automatically identifies the project's own packages (via module name in go.mod) and ignores related warnings in the report
-- If you want to completely exclude the project's own packages from checking, add the project module name to `hack/license-exceptions.txt`
+- If you want to completely exclude the project's own packages from checking, add the project module name to `./.hack/license-exceptions.txt`

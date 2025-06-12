@@ -51,6 +51,13 @@ linters:
       excludes:
         - G404  # Exclude weak random number generator check for tests
         - G115  # Exclude integer overflow conversions check for tests
+    revive:
+      enable-all-rules: false
+      rules:
+        - name: package-comments
+          disabled: true
+        - name: exported
+          disabled: true
 
 formatters:
   enable:

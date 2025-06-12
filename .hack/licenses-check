@@ -24,6 +24,9 @@ ALLOWED_LICENSES=(
     "MPL-2.0"
 )
 
+echo "${BASH_SOURCE[0]}"
+echo "${SCRIPT_DIR}"
+
 EXCEPTIONS_FILE="${SCRIPT_DIR}/license-exceptions.txt"
 EXCEPTIONS=()
 if [[ -f "${EXCEPTIONS_FILE}" ]]; then
