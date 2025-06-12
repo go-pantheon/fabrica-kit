@@ -16,7 +16,7 @@ import (
 	"github.com/go-pantheon/fabrica-kit/metrics"
 	"github.com/go-pantheon/fabrica-kit/router/balancer"
 	"github.com/go-pantheon/fabrica-kit/router/routetable"
-	"github.com/pkg/errors"
+	"github.com/go-pantheon/fabrica-util/errors"
 	"google.golang.org/grpc"
 )
 

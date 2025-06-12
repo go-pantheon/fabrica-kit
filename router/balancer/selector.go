@@ -11,7 +11,7 @@ import (
 	"github.com/go-kratos/kratos/v2/selector/node/direct"
 	"github.com/go-pantheon/fabrica-kit/router/routetable"
 	"github.com/go-pantheon/fabrica-kit/xcontext"
-	"github.com/pkg/errors"
+	"github.com/go-pantheon/fabrica-util/errors"
 )
 
 // New random a selector.
