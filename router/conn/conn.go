@@ -29,12 +29,17 @@ type Conn struct {
 // logger, route table, and discovery mechanism.
 // It configures the connection with appropriate middleware and balancer settings.
 func NewConn(serviceName string, balancerType balancer.Type, logger log.Logger, rt routetable.RouteTable, r registry.Discovery) (*Conn, error) {
-	if balancerType == balancer.TypeMaster && !balancer.MasterBalancerRegistered.Load() {
-		balancer.RegisterMasterBalancer(rt)
-	}
-
-	if balancerType == balancer.TypeReader && !balancer.ReaderBalancerRegistered.Load() {
-		balancer.RegisterReaderBalancer(rt)
+	switch balancerType {
+	case balancer.TypeMaster:
+		if err := balancer.RegisterMasterBalancer(rt); err != nil {
+			return nil, err
+		}
+	case balancer.TypeReader:
+		if err := balancer.RegisterReaderBalancer(rt); err != nil {
+			return nil, err
+		}
+	default:
+		return nil, errors.Errorf("invalid balancer type: %s", balancerType)
 	}
 
 	conn, err := kgrpc.DialInsecure(

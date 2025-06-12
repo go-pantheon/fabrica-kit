@@ -7,6 +7,6 @@ import "time"
 // AppTunnelChangeTimeout defines the timeout duration for tunnel connection changes.
 const (
 	AppTunnelChangeTimeout = time.Second * 3
-	HolderCacheTimeout     = time.Second * 5
-	AsyncRouteTableTimeout = time.Second * 1
+	DelDelayDuration       = time.Second * 5
+	AsyncTimeout           = time.Second * 1
 )

@@ -1,6 +1,6 @@
 // Package trace provides OpenTelemetry tracing functionality for various
 // components, including GORM database operations and HTTP requests.
-package trace
+package gorm
 
 import (
 	"github.com/pkg/errors"
