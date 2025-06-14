@@ -31,13 +31,9 @@ type Conn struct {
 func NewConn(serviceName string, balancerType balancer.Type, logger log.Logger, rt routetable.RouteTable, r registry.Discovery) (*Conn, error) {
 	switch balancerType {
 	case balancer.TypeMaster:
-		if err := balancer.RegisterMasterBalancer(rt); err != nil {
-			return nil, err
-		}
+		balancer.RegisterMasterBalancer(rt)
 	case balancer.TypeReader:
-		if err := balancer.RegisterReaderBalancer(rt); err != nil {
-			return nil, err
-		}
+		balancer.RegisterReaderBalancer(rt)
 	default:
 		return nil, errors.Errorf("invalid balancer type: %s", balancerType)
 	}

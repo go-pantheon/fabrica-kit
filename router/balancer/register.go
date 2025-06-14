@@ -5,7 +5,6 @@ import (
 
 	"github.com/go-kratos/kratos/v2/selector"
 	"github.com/go-pantheon/fabrica-kit/router/routetable"
-	"github.com/go-pantheon/fabrica-util/errors"
 	"google.golang.org/grpc/balancer"
 	"google.golang.org/grpc/balancer/base"
 )
@@ -29,30 +28,26 @@ var (
 
 // RegisterMasterBalancer registers a balancer for master nodes.
 // It uses the provided route table for routing decisions.
-func RegisterMasterBalancer(rt routetable.RouteTable) error {
+func RegisterMasterBalancer(rt routetable.RouteTable) {
 	if masterBalancerBuilderRegistered.Load() {
-		return errors.New("master balancer already registered")
+		return
 	}
 
 	t := TypeMaster
 	registerBalancerBuilder(t, newBalancerBuilder(WithBalancerType(t), WithRouteTable(rt)))
 	masterBalancerBuilderRegistered.Store(true)
-
-	return nil
 }
 
 // RegisterReaderBalancer registers a balancer for reader nodes.
 // It uses the provided route table for routing decisions.
-func RegisterReaderBalancer(rt routetable.RouteTable) error {
+func RegisterReaderBalancer(rt routetable.RouteTable) {
 	if readerBalancerBuilderRegistered.Load() {
-		return errors.New("reader balancer already registered")
+		return
 	}
 
 	t := TypeReader
 	registerBalancerBuilder(t, newBalancerBuilder(WithBalancerType(t), WithRouteTable(rt)))
 	readerBalancerBuilderRegistered.Store(true)
-
-	return nil
 }
 
 func registerBalancerBuilder(balancerType Type, builder selector.Builder) {
