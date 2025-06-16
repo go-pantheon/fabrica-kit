@@ -1,10 +1,23 @@
-# Fabrica Kit
+<p align="center">
+<h1 class="logo">FABRICA KIT</h1>
+</p>
+
+<p align="center">
+<a href="https://github.com/go-pantheon/fabrica-kit/actions"><img src="https://github.com/go-pantheon/fabrica-kit/workflows/Go/badge.svg" alt="Build Status"></a>
+<a href="https://pkg.go.dev/github.com/go-pantheon/fabrica-kit"><img src="https://pkg.go.dev/badge/github.com/go-pantheon/fabrica-kit/v2" alt="GoDoc"></a>
+<a href="https://codecov.io/gh/go-pantheon/fabrica-kit"><img src="https://codecov.io/gh/go-pantheon/fabrica-kit/master/graph/badge.svg" alt="codeCov"></a>
+<a href="https://goreportcard.com/report/github.com/go-pantheon/fabrica-kit"><img src="https://goreportcard.com/badge/github.com/go-pantheon/fabrica-kit" alt="Go Report Card"></a>
+<a href="https://github.com/go-pantheon/fabrica-kit/blob/main/LICENSE"><img src="https://img.shields.io/github/license/go-pantheon/fabrica-kit" alt="License"></a>
+<a href="https://deepwiki.com/go-pantheon/fabrica-kit"><img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki"></a>
+</p>
+
+## About Fabrica Kit
 
 Fabrica Kit is a core toolkit library for the go-pantheon ecosystem, providing essential functionalities and integrations for building robust game server microservices. This kit builds upon the go-pantheon infrastructure to offer standardized components for logging, error handling, tracing, routing, and more.
 
 For more, please check out: [deepwiki/go-pantheon/fabrica-kit](https://deepwiki.com/go-pantheon/fabrica-kit)
 
-## go-pantheon Ecosystem
+## About go-pantheon Ecosystem
 
 **go-pantheon** is a high-performance, highly available game server cluster solution framework based on [go-kratos](https://github.com/go-kratos/kratos). Fabrica Kit, as a framework toolkit, provides support for the following core components:
 
@@ -27,15 +40,15 @@ For more, please check out: [deepwiki/go-pantheon/fabrica-kit](https://deepwiki.
 
 ## Technology Stack
 
-| Technology/Component | Purpose | Version |
-|---------|------|------|
-| Go | Primary development language | 1.23+ |
-| go-kratos | Microservices framework | v2.8.4 |
-| OpenTelemetry | Distributed tracing and metrics | v1.35.0 |
-| Zap | High-performance structured logging | v1.27.0 |
-| go-redis | Redis client | v9.7.3 |
-| gRPC | Remote procedure call | v1.71.1 |
-| GORM | Object-relational mapping | v1.25.12 |
+| Technology/Component | Purpose                             | Version  |
+| -------------------- | ----------------------------------- | -------- |
+| Go                   | Primary development language        | 1.23+    |
+| go-kratos            | Microservices framework             | v2.8.4   |
+| OpenTelemetry        | Distributed tracing and metrics     | v1.35.0  |
+| Zap                  | High-performance structured logging | v1.27.0  |
+| go-redis             | Redis client                        | v9.7.3   |
+| gRPC                 | Remote procedure call               | v1.71.1  |
+| GORM                 | Object-relational mapping           | v1.25.12 |
 
 ## Quick Start
 
