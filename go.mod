@@ -6,7 +6,7 @@ require (
 	github.com/XSAM/otelsql v0.39.0
 	github.com/go-kratos/kratos/contrib/log/zap/v2 v2.0.0-20250527152916-d6f5f00cf562
 	github.com/go-kratos/kratos/v2 v2.8.4
-	github.com/go-pantheon/fabrica-util v0.0.17
+	github.com/go-pantheon/fabrica-util v0.0.18
 	github.com/pkg/errors v0.9.1
 	github.com/redis/go-redis/extra/redisotel/v9 v9.10.0
 	github.com/redis/go-redis/v9 v9.10.0
