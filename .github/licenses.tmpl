@@ -1,4 +1,4 @@
-# go-pantheon fabrica-kit dependencies
+# go-pantheon/fabrica-kit dependencies
 
 The following open source dependencies are used to build the [go-pantheon/fabrica-kit][].
 
