@@ -1,22 +1,26 @@
 package postgresql
 
 import (
-	"database/sql"
-	"fmt"
+	"context"
 
-	"github.com/XSAM/otelsql"
+	"github.com/exaring/otelpgx"
+	"github.com/go-kratos/kratos/v2/log"
 	"github.com/go-pantheon/fabrica-util/data/db/postgresql"
+	"github.com/go-pantheon/fabrica-util/errors"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"go.opentelemetry.io/otel/attribute"
 	semconv "go.opentelemetry.io/otel/semconv/v1.26.0"
 )
 
-// PostgreSQLConfig holds comprehensive configuration for PostgreSQL connection with tracing
+// PostgreSQLConfig holds comprehensive configuration for PostgreSQL connection pool with tracing
 type PostgreSQLConfig struct {
 	postgresql.Config
 
+	// OpenTelemetry tracing options
 	IncludeQueryParameters bool
-	DisableErrSkip         bool
-	DisableQuery           bool
+	DisableSQLInAttributes bool // Use WithDisableSQLStatementInAttributes
+	DisableMetrics         bool // Control metrics collection separately
 	CustomAttributes       []attribute.KeyValue
 }
 
@@ -25,8 +29,8 @@ func DefaultPostgreSQLConfig(dbConfig postgresql.Config) *PostgreSQLConfig {
 	return &PostgreSQLConfig{
 		Config:                 dbConfig,
 		IncludeQueryParameters: false,
-		DisableErrSkip:         false,
-		DisableQuery:           false,
+		DisableSQLInAttributes: false,
+		DisableMetrics:         false,
 		CustomAttributes: []attribute.KeyValue{
 			semconv.DBSystemPostgreSQL,
 			attribute.String("db.name", dbConfig.DBName),
@@ -34,28 +38,40 @@ func DefaultPostgreSQLConfig(dbConfig postgresql.Config) *PostgreSQLConfig {
 	}
 }
 
-func NewTracingDB(config *PostgreSQLConfig) (db *sql.DB, cleanup func(), err error) {
-	var options []otelsql.Option
+func NewTracingPool(ctx context.Context, config *PostgreSQLConfig) (pool *pgxpool.Pool, cleanup func(), err error) {
+	// Create tracer with options
+	var opts []otelpgx.Option
 
 	if len(config.CustomAttributes) > 0 {
-		options = append(options, otelsql.WithAttributes(config.CustomAttributes...))
+		opts = append(opts, otelpgx.WithTracerAttributes(config.CustomAttributes...))
 	}
 
 	if config.IncludeQueryParameters {
-		options = append(options, otelsql.WithSQLCommenter(true))
+		opts = append(opts, otelpgx.WithIncludeQueryParameters())
 	}
 
-	// Configure span options
-	spanOpts := otelsql.SpanOptions{
-		DisableErrSkip: config.DisableErrSkip,
-		DisableQuery:   config.DisableQuery,
+	if config.DisableSQLInAttributes {
+		opts = append(opts, otelpgx.WithDisableSQLStatementInAttributes())
 	}
-	options = append(options, otelsql.WithSpanOptions(spanOpts))
 
-	driverName, err := otelsql.Register("postgres", options...)
+	poolConfig := postgresql.NewConfig(config.DSN, config.DBName)
+	poolConfig.Tracer = otelpgx.NewTracer(opts...)
+
+	pool, cleanup, err = postgresql.New(poolConfig)
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to register otel driver: %w", err)
+		return nil, nil, errors.Wrap(err, "failed to create connection pool")
 	}
 
-	return postgresql.New(driverName, config.Config)
+	if !config.DisableMetrics {
+		if err := otelpgx.RecordStats(pool); err != nil {
+			log.Warnf("Warning: failed to record pool stats: %v\n", err)
+		}
+	}
+
+	return pool, cleanup, nil
+}
+
+// CreateTracer creates a pgx.QueryTracer for use with existing pools
+func CreateTracer(opts ...otelpgx.Option) pgx.QueryTracer {
+	return otelpgx.NewTracer(opts...)
 }
