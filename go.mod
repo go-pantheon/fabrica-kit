@@ -1,12 +1,12 @@
 module github.com/go-pantheon/fabrica-kit
 
-go 1.23.0
+go 1.24.4
 
 require (
 	github.com/exaring/otelpgx v0.9.3
 	github.com/go-kratos/kratos/contrib/log/zap/v2 v2.0.0-20250527152916-d6f5f00cf562
 	github.com/go-kratos/kratos/v2 v2.8.4
-	github.com/go-pantheon/fabrica-util v0.0.18
+	github.com/go-pantheon/fabrica-util v0.0.23
 	github.com/jackc/pgx/v5 v5.7.5
 	github.com/pkg/errors v0.9.1
 	github.com/redis/go-redis/extra/redisotel/v9 v9.10.0

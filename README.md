@@ -88,7 +88,7 @@ Intelligent routing and load balancing:
 
 | Technology/Component | Purpose                             | Version  |
 | -------------------- | ----------------------------------- | -------- |
-| Go                   | Primary development language        | 1.23+    |
+| Go                   | Primary development language        | 1.24+    |
 | go-kratos            | Microservices framework             | v2.8.4   |
 | OpenTelemetry        | Distributed tracing and metrics     | v1.35.0  |
 | Zap                  | High-performance structured logging | v1.27.0  |
@@ -98,7 +98,7 @@ Intelligent routing and load balancing:
 
 ## Requirements
 
-- Go 1.23+
+- Go 1.24+
 
 ## Quick Start
 

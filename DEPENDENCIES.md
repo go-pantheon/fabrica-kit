@@ -7,10 +7,10 @@ The following open source dependencies are used to build the [go-pantheon/fabric
 Some packages may only be included on certain architectures or operating systems.
 
 
- - [github.com/XSAM/otelsql](https://pkg.go.dev/github.com/XSAM/otelsql) ([Apache-2.0](https://github.com/XSAM/otelsql/blob/v0.39.0/LICENSE))
  - [github.com/cenkalti/backoff/v5](https://pkg.go.dev/github.com/cenkalti/backoff/v5) ([MIT](https://github.com/cenkalti/backoff/blob/v5.0.2/LICENSE))
  - [github.com/cespare/xxhash/v2](https://pkg.go.dev/github.com/cespare/xxhash/v2) ([MIT](https://github.com/cespare/xxhash/blob/v2.3.0/LICENSE.txt))
  - [github.com/dgryski/go-rendezvous](https://pkg.go.dev/github.com/dgryski/go-rendezvous) ([MIT](https://github.com/dgryski/go-rendezvous/blob/9f7001d12a5f/LICENSE))
+ - [github.com/exaring/otelpgx](https://pkg.go.dev/github.com/exaring/otelpgx) ([Apache-2.0](https://github.com/exaring/otelpgx/blob/v0.9.3/LICENSE))
  - [github.com/go-kratos/aegis](https://pkg.go.dev/github.com/go-kratos/aegis) ([MIT](https://github.com/go-kratos/aegis/blob/v0.2.0/LICENSE))
  - [github.com/go-kratos/kratos/contrib/log/zap/v2](https://pkg.go.dev/github.com/go-kratos/kratos/contrib/log/zap/v2) ([MIT](https://github.com/go-kratos/kratos/blob/d6f5f00cf562/contrib/log/zap/LICENSE))
  - [github.com/go-kratos/kratos/v2](https://pkg.go.dev/github.com/go-kratos/kratos/v2) ([MIT](https://github.com/go-kratos/kratos/blob/v2.8.4/LICENSE))
