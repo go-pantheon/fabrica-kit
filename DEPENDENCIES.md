@@ -21,7 +21,7 @@ Some packages may only be included on certain architectures or operating systems
  - [github.com/go-playground/form/v4](https://pkg.go.dev/github.com/go-playground/form/v4) ([MIT](https://github.com/go-playground/form/blob/v4.2.1/LICENSE))
  - [github.com/google/uuid](https://pkg.go.dev/github.com/google/uuid) ([BSD-3-Clause](https://github.com/google/uuid/blob/v1.6.0/LICENSE))
  - [github.com/gorilla/mux](https://pkg.go.dev/github.com/gorilla/mux) ([BSD-3-Clause](https://github.com/gorilla/mux/blob/v1.8.1/LICENSE))
- - [github.com/grpc-ecosystem/grpc-gateway/v2](https://pkg.go.dev/github.com/grpc-ecosystem/grpc-gateway/v2) ([BSD-3-Clause](https://github.com/grpc-ecosystem/grpc-gateway/blob/v2.26.3/LICENSE))
+ - [github.com/grpc-ecosystem/grpc-gateway/v2](https://pkg.go.dev/github.com/grpc-ecosystem/grpc-gateway/v2) ([BSD-3-Clause](https://github.com/grpc-ecosystem/grpc-gateway/blob/v2.27.0/LICENSE))
  - [github.com/jackc/pgpassfile](https://pkg.go.dev/github.com/jackc/pgpassfile) ([MIT](https://github.com/jackc/pgpassfile/blob/v1.0.0/LICENSE))
  - [github.com/jackc/pgservicefile](https://pkg.go.dev/github.com/jackc/pgservicefile) ([MIT](https://github.com/jackc/pgservicefile/blob/5a60cdf6a761/LICENSE))
  - [github.com/jackc/pgx/v5](https://pkg.go.dev/github.com/jackc/pgx/v5) ([MIT](https://github.com/jackc/pgx/blob/v5.7.5/LICENSE))

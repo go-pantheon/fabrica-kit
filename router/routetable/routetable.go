@@ -14,9 +14,13 @@ var (
 	ErrRouteTableValueNotSame = errors.New("route table not same")
 )
 
-// RouteTable is an interface for managing routing table entries.
-// It provides methods for storing, retrieving, and manipulating route information.
 type RouteTable interface {
+	MasterRouteTable
+}
+
+// MasterRouteTable is an interface for managing routing table entries.
+// It provides methods for storing, retrieving, and manipulating route information.
+type MasterRouteTable interface {
 	ReNewalRouteTable
 
 	GetEx(ctx context.Context, color string, oid int64) (addr string, err error)
@@ -39,6 +43,7 @@ type ReNewalRouteTable interface {
 }
 
 type ReadOnlyRouteTable interface {
+	BuildKey(color string, oid int64) string
 	Get(ctx context.Context, color string, key int64) (addr string, err error)
 }
 
@@ -53,11 +58,6 @@ type Data interface {
 	ExpireIfSame(ctx context.Context, key, value string, expiration time.Duration) error
 	Del(ctx context.Context, key string) error
 	DelIfSame(ctx context.Context, key, value string) error
-}
-
-// NewRouteTable creates a new RouteTable instance with the specified name and data store.
-func NewRouteTable(name string, rt Data, opts ...Option) RouteTable {
-	return NewBaseRouteTable(rt, name, key, opts...)
 }
 
 func key(name, color string, oid int64) string {

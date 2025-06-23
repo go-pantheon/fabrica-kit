@@ -28,12 +28,17 @@ type Conn struct {
 // NewConn creates a new gRPC client connection with the specified service name, balancer type,
 // logger, route table, and discovery mechanism.
 // It configures the connection with appropriate middleware and balancer settings.
-func NewConn(serviceName string, balancerType balancer.Type, logger log.Logger, rt routetable.RouteTable, r registry.Discovery) (*Conn, error) {
+func NewConn(serviceName string, balancerType balancer.Type, logger log.Logger, rt routetable.ReadOnlyRouteTable, r registry.Discovery) (*Conn, error) {
 	switch balancerType {
 	case balancer.TypeMaster:
-		balancer.RegisterMasterBalancer(rt)
+		mrt, ok := rt.(routetable.MasterRouteTable)
+		if !ok {
+			return nil, errors.Errorf("route table is not a master route table")
+		}
+
+		balancer.RegisterMasterBalancer(mrt)
 	case balancer.TypeReader:
-		balancer.RegisterReaderBalancer(rt)
+		balancer.RegisterReadOnlyBalancer(rt)
 	default:
 		return nil, errors.Errorf("invalid balancer type: %s", balancerType)
 	}

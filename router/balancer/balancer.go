@@ -21,10 +21,10 @@ type weightBalancer struct {
 
 	balancerType  Type
 	currentWeight map[string]float64
-	routeTable    routetable.RouteTable
+	routeTable    routetable.ReadOnlyRouteTable
 }
 
-func newWeightBalancer(balancerType Type, routeTable routetable.RouteTable) selector.Balancer {
+func newWeightBalancer(balancerType Type, routeTable routetable.ReadOnlyRouteTable) selector.Balancer {
 	return &weightBalancer{
 		balancerType:  balancerType,
 		currentWeight: make(map[string]float64),
@@ -48,7 +48,7 @@ func (p *weightBalancer) Pick(ctx context.Context, nodes []selector.WeightedNode
 	color := getColorFromCtx(ctx)
 
 	// select node by oid from routeTable
-	addr, err := p.routeTable.GetEx(ctx, color, oid)
+	addr, err := p.routeTable.Get(ctx, color, oid)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -69,9 +69,14 @@ func (p *weightBalancer) Pick(ctx context.Context, nodes []selector.WeightedNode
 		return selected, selected.Pick(), nil
 	}
 
+	mrt, ok := p.routeTable.(routetable.MasterRouteTable)
+	if !ok {
+		return nil, nil, errors.New("the route table is not a RouteTable")
+	}
+
 	// update route table if the balancer type is master
 	// the route table may be set by other connections at the same time, so we need to judge it with SetNx before setting
-	ok, addr, err := p.routeTable.SetNxOrGet(ctx, color, oid, selected.Address())
+	ok, addr, err = mrt.SetNxOrGet(ctx, color, oid, selected.Address())
 	if err != nil {
 		return nil, nil, err
 	}

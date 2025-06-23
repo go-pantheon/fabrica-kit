@@ -28,7 +28,7 @@ var (
 
 // RegisterMasterBalancer registers a balancer for master nodes.
 // It uses the provided route table for routing decisions.
-func RegisterMasterBalancer(rt routetable.RouteTable) {
+func RegisterMasterBalancer(rt routetable.MasterRouteTable) {
 	if masterBalancerBuilderRegistered.Load() {
 		return
 	}
@@ -38,9 +38,9 @@ func RegisterMasterBalancer(rt routetable.RouteTable) {
 	masterBalancerBuilderRegistered.Store(true)
 }
 
-// RegisterReaderBalancer registers a balancer for reader nodes.
+// RegisterReadOnlyBalancer registers a balancer for reader nodes.
 // It uses the provided route table for routing decisions.
-func RegisterReaderBalancer(rt routetable.RouteTable) {
+func RegisterReadOnlyBalancer(rt routetable.ReadOnlyRouteTable) {
 	if readerBalancerBuilderRegistered.Load() {
 		return
 	}

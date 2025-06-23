@@ -11,11 +11,11 @@ type Option func(o *options)
 
 type options struct {
 	balancerType Type
-	routeTable   routetable.RouteTable
+	routeTable   routetable.ReadOnlyRouteTable
 }
 
 // WithRouteTable sets the route table for the balancer.
-func WithRouteTable(rt routetable.RouteTable) Option {
+func WithRouteTable(rt routetable.ReadOnlyRouteTable) Option {
 	return func(o *options) {
 		o.routeTable = rt
 	}
@@ -33,7 +33,7 @@ var _ selector.BalancerBuilder = (*balancerBuilder)(nil)
 // balancerBuilder is a selector builder for creating weighted round-robin balancers.
 type balancerBuilder struct {
 	balancerType Type
-	routeTable   routetable.RouteTable
+	routeTable   routetable.ReadOnlyRouteTable
 }
 
 // newBalancerBuilder returns a selector builder with wrr balancer
