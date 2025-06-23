@@ -32,9 +32,14 @@ type RouteTable interface {
 
 // ReNewalRouteTable is an interface for read-only access to the routing table.
 type ReNewalRouteTable interface {
-	Get(ctx context.Context, color string, key int64) (addr string, err error)
+	ReadOnlyRouteTable
+
 	RenewSelf(ctx context.Context, color string, key int64, value string) error
 	TTL() time.Duration
+}
+
+type ReadOnlyRouteTable interface {
+	Get(ctx context.Context, color string, key int64) (addr string, err error)
 }
 
 // Data is an interface for the underlying data storage of route tables.
