@@ -15,8 +15,13 @@ const (
 type Option func(*BaseRouteTable)
 
 // WithTTL returns an Option that sets the time-to-live for route table entries.
+// dur must be greater than 0, otherwise the default TTL will be used.
 func WithTTL(dur time.Duration) Option {
 	return func(r *BaseRouteTable) {
+		if dur <= 0 {
+			dur = defaultTTL
+		}
+
 		r.ttl = dur
 	}
 }
