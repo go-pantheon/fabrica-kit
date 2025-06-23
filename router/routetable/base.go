@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	defaultTTL = time.Hour * 24 * 2
+	defaultTTL = time.Hour * 24
 )
 
 // Option is a function type that configures a BaseRouteTable instance.
