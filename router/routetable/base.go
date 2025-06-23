@@ -56,6 +56,10 @@ func NewBaseRouteTable(rtd Data, name string, buildKey buildKeyFunc, opts ...Opt
 	return rt
 }
 
+func (r *BaseRouteTable) TTL() time.Duration {
+	return r.ttl
+}
+
 // Get retrieves a routing entry from the route table.
 func (r *BaseRouteTable) Get(ctx context.Context, color string, uid int64) (addr string, err error) {
 	addr, err = r.Data.Get(ctx, r.buildKey(r.name, color, uid))

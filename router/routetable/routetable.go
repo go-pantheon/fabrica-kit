@@ -34,6 +34,7 @@ type RouteTable interface {
 type ReNewalRouteTable interface {
 	Get(ctx context.Context, color string, key int64) (addr string, err error)
 	RenewSelf(ctx context.Context, color string, key int64, value string) error
+	TTL() time.Duration
 }
 
 // Data is an interface for the underlying data storage of route tables.
