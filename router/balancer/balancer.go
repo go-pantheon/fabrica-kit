@@ -48,7 +48,7 @@ func (p *weightBalancer) Pick(ctx context.Context, nodes []selector.WeightedNode
 	color := getColorFromCtx(ctx)
 
 	// select node by oid from routeTable
-	addr, err := p.routeTable.LoadAndExpire(ctx, color, oid)
+	addr, err := p.routeTable.GetEx(ctx, color, oid)
 	if err != nil {
 		return nil, nil, err
 	}

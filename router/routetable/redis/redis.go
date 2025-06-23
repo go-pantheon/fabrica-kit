@@ -24,19 +24,28 @@ func New(client redis.UniversalClient) *RouteTable {
 	}
 }
 
-// Set stores a key-value pair in Redis with an expiration time.
-func (r *RouteTable) Set(ctx context.Context, key, val string, expire time.Duration) error {
-	return r.client.Set(ctx, key, val, expire).Err()
+// Get retrieves a value from Redis by key.
+func (r *RouteTable) Get(ctx context.Context, key string) (string, error) {
+	val, err := r.client.Get(ctx, key).Result()
+	if errors.Is(err, redis.Nil) {
+		return "", routetable.ErrRouteTableNotFound
+	}
+
+	return val, err
 }
 
-// Load retrieves a value from Redis by key.
-func (r *RouteTable) Load(ctx context.Context, key string) (string, error) {
-	return r.client.Get(ctx, key).Result()
-}
+// GetEx loads a value and resets its expiration time.
+func (r *RouteTable) GetEx(ctx context.Context, key string, exp time.Duration) (string, error) {
+	val, err := r.client.GetEx(ctx, key, exp).Result()
+	if err != nil {
+		if errors.Is(err, redis.Nil) {
+			return "", routetable.ErrRouteTableNotFound
+		}
 
-// Del deletes a key from Redis.
-func (r *RouteTable) Del(ctx context.Context, key string) error {
-	return r.client.Del(ctx, key).Err()
+		return "", err
+	}
+
+	return val, nil
 }
 
 // GetSet atomically sets a new value and returns the old value.
@@ -47,10 +56,19 @@ func (r *RouteTable) GetSet(ctx context.Context, key, val string, expire time.Du
 	}
 
 	if err := r.client.Expire(ctx, key, expire).Err(); err != nil {
+		if errors.Is(err, redis.Nil) {
+			return "", routetable.ErrRouteTableNotFound
+		}
+
 		return "", err
 	}
 
 	return cmd.Val(), nil
+}
+
+// Set stores a key-value pair in Redis with an expiration time.
+func (r *RouteTable) Set(ctx context.Context, key, val string, expire time.Duration) error {
+	return r.client.Set(ctx, key, val, expire).Err()
 }
 
 // SetNxOrGet sets a key-value pair only if the key does not exist.
@@ -62,36 +80,34 @@ func (r *RouteTable) SetNxOrGet(ctx context.Context, key, val string, expire tim
 
 	if !ok {
 		v, err := r.client.Get(ctx, key).Result()
+		if errors.Is(err, redis.Nil) {
+			return false, "", routetable.ErrRouteTableNotFound
+		}
+
 		return false, v, err
 	}
 
 	return true, val, nil
 }
 
-// LoadAndExpire loads a value and resets its expiration time.
-func (r *RouteTable) LoadAndExpire(ctx context.Context, key string, exp time.Duration) (string, error) {
-	val, err := r.client.Get(ctx, key).Result()
-	if err != nil {
-		return "", err
-	}
-
-	if err := r.client.Expire(ctx, key, exp).Err(); err != nil {
-		return "", err
-	}
-
-	return val, nil
-}
-
 // Expire sets an expiration time for a key.
 func (r *RouteTable) Expire(ctx context.Context, key string, expire time.Duration) error {
-	return r.client.Expire(ctx, key, expire).Err()
+	if err := r.client.Expire(ctx, key, expire).Err(); err != nil {
+		if errors.Is(err, redis.Nil) {
+			return routetable.ErrRouteTableNotFound
+		}
+
+		return err
+	}
+
+	return nil
 }
 
 func (r *RouteTable) ExpireIfSame(ctx context.Context, key, expect string, expire time.Duration) error {
 	txf := func(tx *redis.Tx) error {
 		v, err := tx.Get(ctx, key).Result()
 		if errors.Is(err, redis.Nil) {
-			return nil
+			return routetable.ErrRouteTableNotFound
 		}
 
 		if err != nil {
@@ -99,7 +115,7 @@ func (r *RouteTable) ExpireIfSame(ctx context.Context, key, expect string, expir
 		}
 
 		if v != expect {
-			return nil
+			return routetable.ErrRouteTableValueNotSame
 		}
 
 		_, err = tx.Expire(ctx, key, expire).Result()
@@ -107,29 +123,20 @@ func (r *RouteTable) ExpireIfSame(ctx context.Context, key, expect string, expir
 		return err
 	}
 
-	// NOTE: Some Redis client implementations might not support TxPipeline directly.
-	// In those cases, an error will be returned and you may need to
-	// implement a custom transaction mechanism or use a different approach.
-	client, ok := r.client.(*redis.Client)
-	if !ok {
-		// Fallback for non-redis.Client types
-		val, err := r.client.Get(ctx, key).Result()
+	return r.client.Watch(ctx, txf, key)
+}
+
+// Del deletes a key from Redis.
+func (r *RouteTable) Del(ctx context.Context, key string) error {
+	if err := r.client.Del(ctx, key).Err(); err != nil {
 		if errors.Is(err, redis.Nil) {
 			return nil
 		}
 
-		if err != nil {
-			return err
-		}
-
-		if val != expect {
-			return nil
-		}
-
-		return r.client.Del(ctx, key).Err()
+		return err
 	}
 
-	return client.Watch(ctx, txf, key)
+	return nil
 }
 
 // DelIfSame deletes a key only if its current value matches the specified value.
@@ -137,7 +144,7 @@ func (r *RouteTable) DelIfSame(ctx context.Context, key, expect string) error {
 	txf := func(tx *redis.Tx) error {
 		v, err := tx.Get(ctx, key).Result()
 		if errors.Is(err, redis.Nil) {
-			return nil
+			return routetable.ErrRouteTableNotFound
 		}
 
 		if err != nil {
@@ -145,7 +152,7 @@ func (r *RouteTable) DelIfSame(ctx context.Context, key, expect string) error {
 		}
 
 		if v != expect {
-			return nil
+			return routetable.ErrRouteTableValueNotSame
 		}
 
 		_, err = tx.Del(ctx, key).Result()
@@ -153,27 +160,5 @@ func (r *RouteTable) DelIfSame(ctx context.Context, key, expect string) error {
 		return err
 	}
 
-	// NOTE: Some Redis client implementations might not support TxPipeline directly.
-	// In those cases, an error will be returned and you may need to
-	// implement a custom transaction mechanism or use a different approach.
-	client, ok := r.client.(*redis.Client)
-	if !ok {
-		// Fallback for non-redis.Client types
-		val, err := r.client.Get(ctx, key).Result()
-		if errors.Is(err, redis.Nil) {
-			return nil
-		}
-
-		if err != nil {
-			return err
-		}
-
-		if val != expect {
-			return nil
-		}
-
-		return r.client.Del(ctx, key).Err()
-	}
-
-	return client.Watch(ctx, txf, key)
+	return r.client.Watch(ctx, txf, key)
 }

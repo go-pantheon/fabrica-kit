@@ -51,13 +51,24 @@ func NewBaseRouteTable(rtd Data, name string, buildKey buildKeyFunc, opts ...Opt
 	return rt
 }
 
-// Store stores a routing entry in the route table with the default TTL.
-func (r *BaseRouteTable) Store(ctx context.Context, color string, uid int64, addr string) error {
-	if err := r.Set(ctx, r.buildKey(r.name, color, uid), addr, r.ttl); err != nil {
-		return errors.Wrapf(err, "set route table failed. color=%s uid=%d addr=%s", color, uid, addr)
+// Get retrieves a routing entry from the route table.
+func (r *BaseRouteTable) Get(ctx context.Context, color string, uid int64) (addr string, err error) {
+	addr, err = r.Data.Get(ctx, r.buildKey(r.name, color, uid))
+	if err != nil {
+		return "", errors.Wrapf(err, "get route table failed. color=%s uid=%d", color, uid)
 	}
 
-	return nil
+	return addr, nil
+}
+
+// GetEx loads a routing entry and extends its expiration time.
+func (r *BaseRouteTable) GetEx(ctx context.Context, color string, uid int64) (addr string, err error) {
+	addr, err = r.Data.GetEx(ctx, r.buildKey(r.name, color, uid), r.ttl)
+	if err != nil {
+		return "", errors.Wrapf(err, "getex route table failed. color=%s uid=%d", color, uid)
+	}
+
+	return addr, nil
 }
 
 // GetSet atomically gets the old value and sets a new value for a routing entry.
@@ -68,6 +79,15 @@ func (r *BaseRouteTable) GetSet(ctx context.Context, color string, uid int64, ad
 	}
 
 	return old, nil
+}
+
+// Set stores a routing entry in the route table with the default TTL.
+func (r *BaseRouteTable) Set(ctx context.Context, color string, uid int64, addr string) error {
+	if err := r.Data.Set(ctx, r.buildKey(r.name, color, uid), addr, r.ttl); err != nil {
+		return errors.Wrapf(err, "set route table failed. color=%s uid=%d addr=%s", color, uid, addr)
+	}
+
+	return nil
 }
 
 // SetNxOrGet sets a routing entry only if it doesn't already exist.
@@ -81,58 +101,47 @@ func (r *BaseRouteTable) SetNxOrGet(ctx context.Context, color string, uid int64
 	return ok, result, nil
 }
 
-// Load retrieves a routing entry from the route table.
-func (r *BaseRouteTable) Load(ctx context.Context, color string, uid int64) (addr string, err error) {
-	addr, err = r.Data.Load(ctx, r.buildKey(r.name, color, uid))
-	if err != nil {
-		return "", errors.Wrapf(err, "load route table failed. color=%s uid=%d", color, uid)
-	}
-
-	return addr, nil
-}
-
-// LoadAndExpire loads a routing entry and extends its expiration time.
-func (r *BaseRouteTable) LoadAndExpire(ctx context.Context, color string, uid int64) (addr string, err error) {
-	addr, err = r.Data.LoadAndExpire(ctx, r.buildKey(r.name, color, uid), r.ttl)
-	if err != nil {
-		return "", errors.Wrapf(err, "loadandexpire route table failed. color=%s uid=%d", color, uid)
-	}
-
-	return addr, nil
-}
-
-// Del deletes a routing entry from the route table.
-func (r *BaseRouteTable) Del(ctx context.Context, color string, uid int64) error {
-	if err := r.Data.Del(ctx, r.buildKey(r.name, color, uid)); err != nil {
-		return errors.Wrapf(err, "del route table failed. color=%s uid=%d", color, uid)
+// RenewSelf expires a routing entry only if its current value matches the specified value.
+func (r *BaseRouteTable) RenewSelf(ctx context.Context, color string, uid int64, value string) error {
+	if err := r.ExpireIfSame(ctx, r.buildKey(r.name, color, uid), value, r.ttl); err != nil {
+		return errors.Wrapf(err, "renewIfSame route table failed. color=%s uid=%d value=%s", color, uid, value)
 	}
 
 	return nil
 }
 
-// DelDelay marks a routing entry for delayed deletion after the specified expiration time.
-func (r *BaseRouteTable) DelDelay(ctx context.Context, color string, uid int64, exp time.Duration) error {
-	if err := r.Expire(ctx, r.buildKey(r.name, color, uid), exp); err != nil {
-		return errors.Wrapf(err, "expire route table failed. color=%s uid=%d exp=%02fs", color, uid, exp.Seconds())
-	}
+// // Del deletes a routing entry from the route table.
+// func (r *BaseRouteTable) Del(ctx context.Context, color string, uid int64) error {
+// 	if err := r.Del(ctx, r.buildKey(r.name, color, uid)); err != nil {
+// 		return errors.Wrapf(err, "del route table failed. color=%s uid=%d", color, uid)
+// 	}
 
-	return nil
-}
+// 	return nil
+// }
 
-// DelIfSame deletes a routing entry only if its current value matches the specified value.
-func (r *BaseRouteTable) DelIfSame(ctx context.Context, color string, uid int64, value string) error {
-	if err := r.Data.DelIfSame(ctx, r.buildKey(r.name, color, uid), value); err != nil {
-		return errors.Wrapf(err, "DelIfSame failed. color=%s uid=%d value=%s", color, uid, value)
-	}
+// // DelDelay marks a routing entry for delayed deletion after the specified expiration time.
+// func (r *BaseRouteTable) DelDelay(ctx context.Context, color string, uid int64, exp time.Duration) error {
+// 	if err := r.Expire(ctx, r.buildKey(r.name, color, uid), exp); err != nil {
+// 		return errors.Wrapf(err, "expire route table failed. color=%s uid=%d exp=%02fs", color, uid, exp.Seconds())
+// 	}
 
-	return nil
-}
+// 	return nil
+// }
 
-// DelIfSame deletes a routing entry only if its current value matches the specified value.
-func (r *BaseRouteTable) DelDelayIfSame(ctx context.Context, color string, uid int64, value string, exp time.Duration) error {
-	if err := r.ExpireIfSame(ctx, r.buildKey(r.name, color, uid), value, exp); err != nil {
-		return errors.Wrapf(err, "DelDelayIfSame failed. color=%s uid=%d value=%s exp=%02fs", color, uid, value, exp.Seconds())
-	}
+// // DelIfSame deletes a routing entry only if its current value matches the specified value.
+// func (r *BaseRouteTable) DelIfSame(ctx context.Context, color string, uid int64, value string) error {
+// 	if err := r.DelIfSame(ctx, r.buildKey(r.name, color, uid), value); err != nil {
+// 		return errors.Wrapf(err, "DelIfSame failed. color=%s uid=%d value=%s", color, uid, value)
+// 	}
 
-	return nil
-}
+// 	return nil
+// }
+
+// // DelIfSame deletes a routing entry only if its current value matches the specified value.
+// func (r *BaseRouteTable) DelDelayIfSame(ctx context.Context, color string, uid int64, value string, exp time.Duration) error {
+// 	if err := r.ExpireIfSame(ctx, r.buildKey(r.name, color, uid), value, exp); err != nil {
+// 		return errors.Wrapf(err, "DelDelayIfSame failed. color=%s uid=%d value=%s exp=%02fs", color, uid, value, exp.Seconds())
+// 	}
+
+// 	return nil
+// }
