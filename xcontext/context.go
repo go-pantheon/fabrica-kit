@@ -67,6 +67,14 @@ func UID(ctx context.Context) (int64, error) {
 	return id, nil
 }
 
+func UIDOrZero(ctx context.Context) int64 {
+	uid, err := UID(ctx)
+	if err != nil {
+		return 0
+	}
+	return uid
+}
+
 // SetOID adds the object ID to the client context.
 func SetOID(ctx context.Context, id int64) context.Context {
 	return metadata.AppendToClientContext(ctx, CtxOID, strconv.FormatInt(id, 10))
@@ -90,6 +98,14 @@ func OID(ctx context.Context) (int64, error) {
 	return id, nil
 }
 
+func OIDOrZero(ctx context.Context) int64 {
+	oid, err := OID(ctx)
+	if err != nil {
+		return 0
+	}
+	return oid
+}
+
 // SetSID adds the server ID to the client context.
 func SetSID(ctx context.Context, id int64) context.Context {
 	return metadata.AppendToClientContext(ctx, CtxSID, strconv.FormatInt(id, 10))
@@ -111,6 +127,14 @@ func SID(ctx context.Context) (int64, error) {
 	}
 
 	return id, nil
+}
+
+func SIDOrZero(ctx context.Context) int64 {
+	sid, err := SID(ctx)
+	if err != nil {
+		return 0
+	}
+	return sid
 }
 
 // SetStatus adds the status information to the client context.

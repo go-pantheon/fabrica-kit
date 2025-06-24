@@ -3,7 +3,11 @@
 package xerrors
 
 import (
+	"context"
+	"io"
+
 	"github.com/go-pantheon/fabrica-util/errors"
+	"github.com/go-pantheon/fabrica-util/xsync"
 )
 
 // Route table errors
@@ -12,10 +16,15 @@ var (
 	ErrRouteTableNotFound = errors.New("route table not found")
 )
 
+var (
+	ErrHandlerNotFound = errors.New("handler not found")
+)
+
 // Tunnel errors
 var (
 	// ErrTunnelStopped is returned when operations are attempted on a stopped tunnel.
 	ErrTunnelStopped = errors.New("tunnel stopped")
+	ErrLifeStopped   = errors.New("life stopped")
 )
 
 // DB errors
@@ -35,3 +44,15 @@ var (
 	// ErrDBProtoDecode is returned when protobuf decoding fails for a database record.
 	ErrDBProtoDecode = errors.New("db proto decode error")
 )
+
+func IsUnlogErr(err error) bool {
+	return errors.Is(err, xsync.ErrStopByTrigger) || IsEOFError(err) || IsCancelError(err) || IsLogoutError(err)
+}
+
+func IsEOFError(err error) bool {
+	return errors.Is(err, io.EOF)
+}
+
+func IsCancelError(err error) bool {
+	return errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded)
+}
