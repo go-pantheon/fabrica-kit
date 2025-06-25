@@ -72,6 +72,7 @@ func UIDOrZero(ctx context.Context) int64 {
 	if err != nil {
 		return 0
 	}
+
 	return uid
 }
 
@@ -103,6 +104,7 @@ func OIDOrZero(ctx context.Context) int64 {
 	if err != nil {
 		return 0
 	}
+
 	return oid
 }
 
@@ -134,6 +136,7 @@ func SIDOrZero(ctx context.Context) int64 {
 	if err != nil {
 		return 0
 	}
+
 	return sid
 }
 
