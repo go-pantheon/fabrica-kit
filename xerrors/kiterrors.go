@@ -13,7 +13,8 @@ import (
 // Route table errors
 var (
 	// ErrRouteTableNotFound is returned when a requested route table entry cannot be found.
-	ErrRouteTableNotFound = errors.New("route table not found")
+	ErrRouteTableNotFound     = errors.New("route table not found")
+	ErrRouteTableValueNotSame = errors.New("route table not same")
 )
 
 var (

@@ -4,14 +4,8 @@ package routetable
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"time"
-)
-
-var (
-	ErrRouteTableNotFound     = errors.New("route table not found")
-	ErrRouteTableValueNotSame = errors.New("route table not same")
 )
 
 type RouteTable interface {

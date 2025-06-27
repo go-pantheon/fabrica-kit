@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/go-pantheon/fabrica-kit/router/routetable"
+	"github.com/go-pantheon/fabrica-kit/xerrors"
 	"github.com/redis/go-redis/v9"
 )
 
@@ -28,7 +29,7 @@ func New(client redis.UniversalClient) *RouteTable {
 func (r *RouteTable) Get(ctx context.Context, key string) (string, error) {
 	val, err := r.client.Get(ctx, key).Result()
 	if errors.Is(err, redis.Nil) {
-		return "", routetable.ErrRouteTableNotFound
+		return "", xerrors.ErrRouteTableNotFound
 	}
 
 	return val, err
@@ -39,7 +40,7 @@ func (r *RouteTable) GetEx(ctx context.Context, key string, exp time.Duration) (
 	val, err := r.client.GetEx(ctx, key, exp).Result()
 	if err != nil {
 		if errors.Is(err, redis.Nil) {
-			return "", routetable.ErrRouteTableNotFound
+			return "", xerrors.ErrRouteTableNotFound
 		}
 
 		return "", err
@@ -57,7 +58,7 @@ func (r *RouteTable) GetSet(ctx context.Context, key, val string, expire time.Du
 
 	if err := r.client.Expire(ctx, key, expire).Err(); err != nil {
 		if errors.Is(err, redis.Nil) {
-			return "", routetable.ErrRouteTableNotFound
+			return "", xerrors.ErrRouteTableNotFound
 		}
 
 		return "", err
@@ -81,7 +82,7 @@ func (r *RouteTable) SetNxOrGet(ctx context.Context, key, val string, expire tim
 	if !ok {
 		v, err := r.client.Get(ctx, key).Result()
 		if errors.Is(err, redis.Nil) {
-			return false, "", routetable.ErrRouteTableNotFound
+			return false, "", xerrors.ErrRouteTableNotFound
 		}
 
 		return false, v, err
@@ -94,7 +95,7 @@ func (r *RouteTable) SetNxOrGet(ctx context.Context, key, val string, expire tim
 func (r *RouteTable) Expire(ctx context.Context, key string, expire time.Duration) error {
 	if err := r.client.Expire(ctx, key, expire).Err(); err != nil {
 		if errors.Is(err, redis.Nil) {
-			return routetable.ErrRouteTableNotFound
+			return xerrors.ErrRouteTableNotFound
 		}
 
 		return err
@@ -107,7 +108,7 @@ func (r *RouteTable) ExpireIfSame(ctx context.Context, key, expect string, expir
 	txf := func(tx *redis.Tx) error {
 		v, err := tx.Get(ctx, key).Result()
 		if errors.Is(err, redis.Nil) {
-			return routetable.ErrRouteTableNotFound
+			return xerrors.ErrRouteTableNotFound
 		}
 
 		if err != nil {
@@ -115,7 +116,7 @@ func (r *RouteTable) ExpireIfSame(ctx context.Context, key, expect string, expir
 		}
 
 		if v != expect {
-			return routetable.ErrRouteTableValueNotSame
+			return xerrors.ErrRouteTableValueNotSame
 		}
 
 		_, err = tx.Expire(ctx, key, expire).Result()
@@ -144,7 +145,7 @@ func (r *RouteTable) DelIfSame(ctx context.Context, key, expect string) error {
 	txf := func(tx *redis.Tx) error {
 		v, err := tx.Get(ctx, key).Result()
 		if errors.Is(err, redis.Nil) {
-			return routetable.ErrRouteTableNotFound
+			return xerrors.ErrRouteTableNotFound
 		}
 
 		if err != nil {
@@ -152,7 +153,7 @@ func (r *RouteTable) DelIfSame(ctx context.Context, key, expect string) error {
 		}
 
 		if v != expect {
-			return routetable.ErrRouteTableValueNotSame
+			return xerrors.ErrRouteTableValueNotSame
 		}
 
 		_, err = tx.Del(ctx, key).Result()
