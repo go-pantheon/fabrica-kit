@@ -9,9 +9,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/go-kratos/kratos/v2/log"
-	"github.com/go-kratos/kratos/v2/metadata"
 	"github.com/pkg/errors"
+	"google.golang.org/grpc/metadata"
 )
 
 // Context is the context of the game
@@ -32,13 +31,15 @@ var Keys = []string{CtxSID, CtxUID, CtxOID, CtxStatus, CtxColor, CtxReferer, Ctx
 
 // SetColor adds the color information to the client context.
 func SetColor(ctx context.Context, color string) context.Context {
-	return metadata.AppendToClientContext(ctx, string(CtxColor), color)
+	return metadata.AppendToOutgoingContext(ctx, string(CtxColor), color)
 }
 
 // Color retrieves the color information from the server context.
 func Color(ctx context.Context) string {
-	if md, ok := metadata.FromServerContext(ctx); ok {
-		return md.Get(CtxColor)
+	if md, ok := metadata.FromIncomingContext(ctx); ok {
+		if vs := md.Get(string(CtxColor)); len(vs) > 0 {
+			return vs[0]
+		}
 	}
 
 	return ""
@@ -46,20 +47,25 @@ func Color(ctx context.Context) string {
 
 // SetUID adds the user ID to the client context.
 func SetUID(ctx context.Context, id int64) context.Context {
-	return metadata.AppendToClientContext(ctx, CtxUID, strconv.FormatInt(id, 10))
+	return metadata.AppendToOutgoingContext(ctx, CtxUID, strconv.FormatInt(id, 10))
 }
 
 // UID retrieves the user ID from the server context.
 // Returns an error if the context doesn't contain metadata or if the ID is not a valid int64.
 func UID(ctx context.Context) (int64, error) {
-	md, ok := metadata.FromServerContext(ctx)
+	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
 		return 0, errors.New("metadata not in context")
 	}
 
-	str := md.Get(CtxUID)
-	id, err := strconv.ParseInt(str, 10, 64)
+	vs := md.Get(string(CtxUID))
+	if len(vs) == 0 {
+		return 0, errors.New("uid not in context")
+	}
 
+	str := vs[0]
+
+	id, err := strconv.ParseInt(str, 10, 64)
 	if err != nil {
 		return 0, errors.Wrapf(err, "uid must be int64, uid=%s", str)
 	}
@@ -78,20 +84,25 @@ func UIDOrZero(ctx context.Context) int64 {
 
 // SetOID adds the object ID to the client context.
 func SetOID(ctx context.Context, id int64) context.Context {
-	return metadata.AppendToClientContext(ctx, CtxOID, strconv.FormatInt(id, 10))
+	return metadata.AppendToOutgoingContext(ctx, CtxOID, strconv.FormatInt(id, 10))
 }
 
 // OID retrieves the object ID from the server context.
 // Returns an error if the context doesn't contain metadata or if the ID is not a valid int64.
 func OID(ctx context.Context) (int64, error) {
-	md, ok := metadata.FromServerContext(ctx)
+	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
 		return 0, errors.New("metadata not in context")
 	}
 
-	str := md.Get(CtxOID)
-	id, err := strconv.ParseInt(str, 10, 64)
+	vs := md.Get(string(CtxOID))
+	if len(vs) == 0 {
+		return 0, errors.New("oid not in context")
+	}
 
+	str := vs[0]
+
+	id, err := strconv.ParseInt(str, 10, 64)
 	if err != nil {
 		return 0, errors.Wrapf(err, "oid must be int64, oid=%s", str)
 	}
@@ -110,20 +121,25 @@ func OIDOrZero(ctx context.Context) int64 {
 
 // SetSID adds the server ID to the client context.
 func SetSID(ctx context.Context, id int64) context.Context {
-	return metadata.AppendToClientContext(ctx, CtxSID, strconv.FormatInt(id, 10))
+	return metadata.AppendToOutgoingContext(ctx, CtxSID, strconv.FormatInt(id, 10))
 }
 
 // SID retrieves the server ID from the server context.
 // Returns an error if the context doesn't contain metadata or if the ID is not a valid int64.
 func SID(ctx context.Context) (int64, error) {
-	md, ok := metadata.FromServerContext(ctx)
+	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
 		return 0, errors.New("metadata not in context")
 	}
 
-	str := md.Get(CtxSID)
-	id, err := strconv.ParseInt(str, 10, 64)
+	vs := md.Get(string(CtxSID))
+	if len(vs) == 0 {
+		return 0, errors.New("sid not in context")
+	}
 
+	str := vs[0]
+
+	id, err := strconv.ParseInt(str, 10, 64)
 	if err != nil {
 		return 0, errors.Wrapf(err, "sid must be int64, sid=%s", str)
 	}
@@ -147,25 +163,30 @@ func SetStatus(ctx context.Context, status int64) context.Context {
 		return ctx
 	}
 
-	return metadata.AppendToClientContext(ctx, CtxStatus, strconv.FormatInt(status, 10))
+	return metadata.AppendToOutgoingContext(ctx, CtxStatus, strconv.FormatInt(status, 10))
 }
 
 // Status retrieves the status information from the server context.
 // Returns 0 if the context doesn't contain metadata or if the status is not a valid int64.
 func Status(ctx context.Context) int64 {
-	if md, ok := metadata.FromServerContext(ctx); ok {
-		v := md.Get(CtxStatus)
-		status, err := strconv.ParseInt(v, 10, 64)
-
-		if err != nil {
-			log.Errorf("status must be int64, status=%s", v)
-			return 0
-		}
-
-		return status
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		return 0
 	}
 
-	return 0
+	vs := md.Get(string(CtxStatus))
+	if len(vs) == 0 {
+		return 0
+	}
+
+	str := vs[0]
+
+	status, err := strconv.ParseInt(str, 10, 64)
+	if err != nil {
+		return 0
+	}
+
+	return status
 }
 
 // SetClientIP adds the client IP address to the client context.
@@ -175,13 +196,19 @@ func SetClientIP(ctx context.Context, ip string) context.Context {
 		return ctx
 	}
 
-	return metadata.AppendToClientContext(ctx, CtxClientIP, strings.Split(ip, ":")[0])
+	return metadata.AppendToOutgoingContext(ctx, CtxClientIP, strings.Split(ip, ":")[0])
 }
 
 // ClientIP retrieves the client IP address from the server context.
 func ClientIP(ctx context.Context) string {
-	if md, ok := metadata.FromServerContext(ctx); ok {
-		return md.Get(CtxClientIP)
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		return ""
+	}
+
+	vs := md.Get(string(CtxClientIP))
+	if len(vs) == 0 {
+		return ""
 	}
 
 	return ""
@@ -194,27 +221,23 @@ func SetGateReferer(ctx context.Context, server string, wid uint64) context.Cont
 		return ctx
 	}
 
-	return metadata.AppendToClientContext(ctx, CtxGateReferer, fmt.Sprintf("%s#%d", server, wid))
+	return metadata.AppendToOutgoingContext(ctx, CtxGateReferer, fmt.Sprintf("%s#%d", server, wid))
 }
 
 // GateReferer retrieves the gate server reference information from the server context.
 func GateReferer(ctx context.Context) string {
-	if md, ok := metadata.FromServerContext(ctx); ok {
-		return md.Get(CtxGateReferer)
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		return ""
+	}
+
+	if vs := md.Get(string(CtxGateReferer)); len(vs) > 0 {
+		return vs[0]
 	}
 
 	return ""
 }
 
-func NewClientContext(ctx context.Context, kv ...string) context.Context {
-	md, ok := metadata.FromClientContext(ctx)
-	if !ok {
-		md = metadata.New()
-	}
-
-	for i := 0; i < len(kv); i += 2 {
-		md.Set(kv[i], kv[i+1])
-	}
-
-	return metadata.NewClientContext(ctx, md)
+func AppendToOutgoingContext(ctx context.Context, kv ...string) context.Context {
+	return metadata.AppendToOutgoingContext(ctx, kv...)
 }

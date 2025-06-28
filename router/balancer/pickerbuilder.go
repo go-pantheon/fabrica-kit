@@ -3,7 +3,6 @@
 package balancer
 
 import (
-	"github.com/go-kratos/kratos/v2/log"
 	"github.com/go-kratos/kratos/v2/registry"
 	"github.com/go-kratos/kratos/v2/selector"
 	"google.golang.org/grpc/balancer"
@@ -24,8 +23,6 @@ func newPickerBuilder(builder selector.Builder) *pickerBuilder {
 
 // Build creates a grpc Picker.
 func (b *pickerBuilder) Build(info base.PickerBuildInfo) balancer.Picker {
-	log.Debugf("picker builder build info: %+v", info)
-
 	if len(info.ReadySCs) == 0 {
 		// Block the RPC until a new picker is available via UpdateState().
 		return base.NewErrPicker(balancer.ErrNoSubConnAvailable)
