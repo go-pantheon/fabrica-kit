@@ -205,3 +205,16 @@ func GateReferer(ctx context.Context) string {
 
 	return ""
 }
+
+func NewClientContext(ctx context.Context, kv ...string) context.Context {
+	md, ok := metadata.FromClientContext(ctx)
+	if !ok {
+		md = metadata.New()
+	}
+
+	for i := 0; i < len(kv); i += 2 {
+		md.Set(kv[i], kv[i+1])
+	}
+
+	return metadata.NewClientContext(ctx, md)
+}

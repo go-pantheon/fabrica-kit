@@ -26,7 +26,7 @@ func NewFilter() selector.NodeFilter {
 }
 
 func getColorFromCtx(ctx context.Context) string {
-	if md, ok := metadata.FromServerContext(ctx); ok {
+	if md, ok := metadata.FromClientContext(ctx); ok {
 		return md.Get(xcontext.CtxColor)
 	}
 

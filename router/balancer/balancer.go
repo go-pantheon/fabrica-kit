@@ -10,6 +10,7 @@ import (
 	"github.com/go-kratos/kratos/v2/selector"
 	"github.com/go-pantheon/fabrica-kit/router/routetable"
 	"github.com/go-pantheon/fabrica-kit/xcontext"
+	"github.com/go-pantheon/fabrica-kit/xerrors"
 	"github.com/go-pantheon/fabrica-util/errors"
 )
 
@@ -49,7 +50,7 @@ func (p *weightBalancer) Pick(ctx context.Context, nodes []selector.WeightedNode
 
 	// select node by oid from routeTable
 	addr, err := p.routeTable.Get(ctx, color, oid)
-	if err != nil {
+	if err != nil && !errors.Is(err, xerrors.ErrRouteTableNotFound) {
 		return nil, nil, err
 	}
 
@@ -127,7 +128,7 @@ func (p *weightBalancer) weightSelect(nodes []selector.WeightedNode) selector.We
 }
 
 func getOIDFromCtx(ctx context.Context) (int64, error) {
-	md, ok := metadata.FromServerContext(ctx)
+	md, ok := metadata.FromClientContext(ctx)
 	if !ok {
 		return 0, errors.New("metadata is not in context")
 	}
