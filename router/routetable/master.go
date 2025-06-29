@@ -31,7 +31,7 @@ func NewMasterRouteTable(rtd Data, name string, opts ...Option) *masterRouteTabl
 func (r *masterRouteTable) GetSet(ctx context.Context, color string, uid int64, addr string) (old string, err error) {
 	old, err = r.data.GetSet(ctx, r.BuildKey(color, uid), addr, r.TTL())
 	if err != nil {
-		return "", errors.Wrapf(err, "getset route table failed. color=%s uid=%d addr=%s", color, uid, addr)
+		return "", errors.WithMessage(err, "getset route table failed")
 	}
 
 	return old, nil
@@ -40,7 +40,7 @@ func (r *masterRouteTable) GetSet(ctx context.Context, color string, uid int64, 
 // Set stores a routing entry in the route table with the default TTL.
 func (r *masterRouteTable) Set(ctx context.Context, color string, uid int64, addr string) error {
 	if err := r.data.Set(ctx, r.BuildKey(color, uid), addr, r.TTL()); err != nil {
-		return errors.Wrapf(err, "set route table failed. color=%s uid=%d addr=%s", color, uid, addr)
+		return errors.WithMessage(err, "set route table failed")
 	}
 
 	return nil
@@ -51,7 +51,7 @@ func (r *masterRouteTable) Set(ctx context.Context, color string, uid int64, add
 func (r *masterRouteTable) SetNxOrGet(ctx context.Context, color string, uid int64, addr string) (ok bool, result string, err error) {
 	ok, result, err = r.data.SetNxOrGet(ctx, r.BuildKey(color, uid), addr, r.TTL())
 	if err != nil {
-		return false, "", errors.Wrapf(err, "setnx route table failed. color=%s uid=%d addr=%s", color, uid, addr)
+		return false, "", errors.WithMessage(err, "setnx route table failed")
 	}
 
 	return ok, result, nil
@@ -61,7 +61,7 @@ func (r *masterRouteTable) SetNxOrGet(ctx context.Context, color string, uid int
 func (r *masterRouteTable) GetEx(ctx context.Context, color string, uid int64) (addr string, err error) {
 	addr, err = r.data.GetEx(ctx, r.BuildKey(color, uid), r.TTL())
 	if err != nil {
-		return "", errors.Wrapf(err, "getex route table failed. color=%s uid=%d", color, uid)
+		return "", errors.WithMessage(err, "getex route table failed")
 	}
 
 	return addr, nil

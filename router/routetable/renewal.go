@@ -59,7 +59,7 @@ func (r *renewalRouteTable) TTL() time.Duration {
 // RenewSelf expires a routing entry only if its current value matches the specified value.
 func (r *renewalRouteTable) RenewSelf(ctx context.Context, color string, uid int64, value string) error {
 	if err := r.data.ExpireIfSame(ctx, r.BuildKey(color, uid), value, r.ttl); err != nil {
-		return errors.Wrapf(err, "renewIfSame route table failed. color=%s uid=%d value=%s", color, uid, value)
+		return errors.WithMessage(err, "renewIfSame route table failed")
 	}
 
 	return nil

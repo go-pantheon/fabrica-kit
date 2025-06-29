@@ -38,7 +38,7 @@ func (r *readOnlyRouteTable) BuildKey(color string, oid int64) string {
 func (r *readOnlyRouteTable) Get(ctx context.Context, color string, uid int64) (addr string, err error) {
 	addr, err = r.data.Get(ctx, r.buildKey(r.name, color, uid))
 	if err != nil {
-		return "", errors.Wrapf(err, "get route table failed. color=%s uid=%d", color, uid)
+		return "", errors.WithMessage(err, "get route table failed")
 	}
 
 	return addr, nil

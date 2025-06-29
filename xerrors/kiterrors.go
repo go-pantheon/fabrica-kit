@@ -12,9 +12,15 @@ import (
 
 // Route table errors
 var (
-	// ErrRouteTableNotFound is returned when a requested route table entry cannot be found.
 	ErrRouteTableNotFound     = errors.New("route table not found")
-	ErrRouteTableValueNotSame = errors.New("route table not same")
+	ErrRouteTableNotFoundFunc = func(key string) error {
+		return errors.WithMessagef(ErrRouteTableNotFound, "key=%s", key)
+	}
+
+	ErrRouteTableValueNotSame     = errors.New("route table not same")
+	ErrRouteTableValueNotSameFunc = func(key, val string) error {
+		return errors.WithMessagef(ErrRouteTableValueNotSame, "key=%s val=%s", key, val)
+	}
 )
 
 var (

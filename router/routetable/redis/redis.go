@@ -3,11 +3,11 @@ package redis
 
 import (
 	"context"
-	"errors"
 	"time"
 
 	"github.com/go-pantheon/fabrica-kit/router/routetable"
 	"github.com/go-pantheon/fabrica-kit/xerrors"
+	"github.com/go-pantheon/fabrica-util/errors"
 	"github.com/redis/go-redis/v9"
 )
 
@@ -29,10 +29,10 @@ func New(client redis.UniversalClient) *RouteTable {
 func (r *RouteTable) Get(ctx context.Context, key string) (string, error) {
 	val, err := r.client.Get(ctx, key).Result()
 	if errors.Is(err, redis.Nil) {
-		return "", xerrors.ErrRouteTableNotFound
+		return "", xerrors.ErrRouteTableNotFoundFunc(key)
 	}
 
-	return val, err
+	return val, errors.Wrapf(err, "key=%s", key)
 }
 
 // GetEx loads a value and resets its expiration time.
@@ -40,10 +40,10 @@ func (r *RouteTable) GetEx(ctx context.Context, key string, exp time.Duration) (
 	val, err := r.client.GetEx(ctx, key, exp).Result()
 	if err != nil {
 		if errors.Is(err, redis.Nil) {
-			return "", xerrors.ErrRouteTableNotFound
+			return "", xerrors.ErrRouteTableNotFoundFunc(key)
 		}
 
-		return "", err
+		return "", errors.Wrapf(err, "key=%s", key)
 	}
 
 	return val, nil
@@ -53,12 +53,12 @@ func (r *RouteTable) GetEx(ctx context.Context, key string, exp time.Duration) (
 func (r *RouteTable) GetSet(ctx context.Context, key, val string, expire time.Duration) (string, error) {
 	cmd := r.client.GetSet(ctx, key, val)
 	if err := cmd.Err(); err != nil {
-		return "", err
+		return "", errors.Wrapf(err, "key=%s", key)
 	}
 
 	if err := r.client.Expire(ctx, key, expire).Err(); err != nil {
 		if errors.Is(err, redis.Nil) {
-			return "", xerrors.ErrRouteTableNotFound
+			return "", xerrors.ErrRouteTableNotFoundFunc(key)
 		}
 
 		return "", err
@@ -69,23 +69,27 @@ func (r *RouteTable) GetSet(ctx context.Context, key, val string, expire time.Du
 
 // Set stores a key-value pair in Redis with an expiration time.
 func (r *RouteTable) Set(ctx context.Context, key, val string, expire time.Duration) error {
-	return r.client.Set(ctx, key, val, expire).Err()
+	if err := r.client.Set(ctx, key, val, expire).Err(); err != nil {
+		return errors.Wrapf(err, "key=%s val=%s expire=%s", key, val, expire)
+	}
+
+	return nil
 }
 
 // SetNxOrGet sets a key-value pair only if the key does not exist.
 func (r *RouteTable) SetNxOrGet(ctx context.Context, key, val string, expire time.Duration) (bool, string, error) {
 	ok, err := r.client.SetNX(ctx, key, val, expire).Result()
 	if err != nil {
-		return false, "", err
+		return false, "", errors.Wrapf(err, "setnx route table failed. key=%s val=%s expire=%s", key, val, expire)
 	}
 
 	if !ok {
 		v, err := r.client.Get(ctx, key).Result()
 		if errors.Is(err, redis.Nil) {
-			return false, "", xerrors.ErrRouteTableNotFound
+			return false, "", xerrors.ErrRouteTableNotFoundFunc(key)
 		}
 
-		return false, v, err
+		return false, v, errors.Wrapf(err, "key=%s", key)
 	}
 
 	return true, val, nil
@@ -95,10 +99,10 @@ func (r *RouteTable) SetNxOrGet(ctx context.Context, key, val string, expire tim
 func (r *RouteTable) Expire(ctx context.Context, key string, expire time.Duration) error {
 	if err := r.client.Expire(ctx, key, expire).Err(); err != nil {
 		if errors.Is(err, redis.Nil) {
-			return xerrors.ErrRouteTableNotFound
+			return xerrors.ErrRouteTableNotFoundFunc(key)
 		}
 
-		return err
+		return errors.Wrapf(err, "key=%s expire=%s", key, expire)
 	}
 
 	return nil
@@ -108,23 +112,27 @@ func (r *RouteTable) ExpireIfSame(ctx context.Context, key, expect string, expir
 	txf := func(tx *redis.Tx) error {
 		v, err := tx.Get(ctx, key).Result()
 		if errors.Is(err, redis.Nil) {
-			return xerrors.ErrRouteTableNotFound
+			return xerrors.ErrRouteTableNotFoundFunc(key)
 		}
 
 		if err != nil {
-			return err
+			return errors.Wrapf(err, "key=%s", key)
 		}
 
 		if v != expect {
-			return xerrors.ErrRouteTableValueNotSame
+			return xerrors.ErrRouteTableValueNotSameFunc(key, expect)
 		}
 
 		_, err = tx.Expire(ctx, key, expire).Result()
 
-		return err
+		return errors.Wrapf(err, "key=%s", key)
 	}
 
-	return r.client.Watch(ctx, txf, key)
+	if err := r.client.Watch(ctx, txf, key); err != nil {
+		return errors.Wrapf(err, "key=%s", key)
+	}
+
+	return nil
 }
 
 // Del deletes a key from Redis.
@@ -134,7 +142,7 @@ func (r *RouteTable) Del(ctx context.Context, key string) error {
 			return nil
 		}
 
-		return err
+		return errors.Wrapf(err, "key=%s", key)
 	}
 
 	return nil
@@ -145,21 +153,25 @@ func (r *RouteTable) DelIfSame(ctx context.Context, key, expect string) error {
 	txf := func(tx *redis.Tx) error {
 		v, err := tx.Get(ctx, key).Result()
 		if errors.Is(err, redis.Nil) {
-			return xerrors.ErrRouteTableNotFound
+			return xerrors.ErrRouteTableNotFoundFunc(key)
 		}
 
 		if err != nil {
-			return err
+			return errors.Wrapf(err, "key=%s", key)
 		}
 
 		if v != expect {
-			return xerrors.ErrRouteTableValueNotSame
+			return xerrors.ErrRouteTableValueNotSameFunc(key, expect)
 		}
 
 		_, err = tx.Del(ctx, key).Result()
 
-		return err
+		return errors.Wrapf(err, "key=%s", key)
 	}
 
-	return r.client.Watch(ctx, txf, key)
+	if err := r.client.Watch(ctx, txf, key); err != nil {
+		return errors.Wrapf(err, "key=%s", key)
+	}
+
+	return nil
 }
