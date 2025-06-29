@@ -17,12 +17,11 @@ var (
 
 // Init initializes the profile settings with the given parameters.
 // It sets up the environment profile, color, zone, version, node name, and gRPC endpoint.
-func Init(serviceName, profile, color string, zone uint32, version string, nodeName string, gRPCEndpoint *url.URL) {
+func Init(serviceName, profile, color string, zone uint32, version string, nodeName string) {
 	_serviceName = serviceName
 	_profile = profile
 	_color = color
 	_version = version
-	_grpcEndpoint = strings.Replace(gRPCEndpoint.String(), "grpc://", "", 1)
 	_nodeName = nodeName
 	_zone = zone
 }
@@ -54,6 +53,10 @@ func NodeName() string {
 // GRPCEndpoint returns the gRPC endpoint string.
 func GRPCEndpoint() string {
 	return _grpcEndpoint
+}
+
+func SetGRPCEndpoint(endpoint *url.URL) {
+	_grpcEndpoint = strings.Replace(endpoint.String(), "grpc://", "", 1)
 }
 
 // Zone returns the current zone identifier.
