@@ -3,7 +3,6 @@ package balancer
 import (
 	"context"
 
-	"github.com/go-kratos/kratos/v2/metadata"
 	"github.com/go-kratos/kratos/v2/selector"
 	"github.com/go-pantheon/fabrica-kit/profile"
 	"github.com/go-pantheon/fabrica-kit/xcontext"
@@ -16,19 +15,11 @@ func NewFilter() selector.NodeFilter {
 		newNodes := make([]selector.Node, 0, len(nodes))
 
 		for _, n := range nodes {
-			if n.Metadata()[profile.ColorKey] == getColorFromCtx(ctx) {
+			if n.Metadata()[profile.ColorKey] == xcontext.ColorFromOutgoingContext(ctx) {
 				newNodes = append(newNodes, n)
 			}
 		}
 
 		return newNodes
 	}
-}
-
-func getColorFromCtx(ctx context.Context) string {
-	if md, ok := metadata.FromClientContext(ctx); ok {
-		return md.Get(xcontext.CtxColor)
-	}
-
-	return profile.Color()
 }

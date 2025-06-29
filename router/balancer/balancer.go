@@ -2,11 +2,9 @@ package balancer
 
 import (
 	"context"
-	"strconv"
 	"sync"
 
 	"github.com/go-kratos/kratos/v2/log"
-	"github.com/go-kratos/kratos/v2/metadata"
 	"github.com/go-kratos/kratos/v2/selector"
 	"github.com/go-pantheon/fabrica-kit/router/routetable"
 	"github.com/go-pantheon/fabrica-kit/xcontext"
@@ -41,12 +39,12 @@ func (p *weightBalancer) Pick(ctx context.Context, nodes []selector.WeightedNode
 		return nil, nil, selector.ErrNoAvailable
 	}
 
-	oid, err := getOIDFromCtx(ctx)
+	oid, err := xcontext.OIDFromOutgoingContext(ctx)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	color := getColorFromCtx(ctx)
+	color := xcontext.ColorFromOutgoingContext(ctx)
 
 	// select node by oid from routeTable
 	addr, err := p.routeTable.Get(ctx, color, oid)
@@ -125,18 +123,4 @@ func (p *weightBalancer) weightSelect(nodes []selector.WeightedNode) selector.We
 	p.currentWeight[selected.Address()] = selectWeight - totalWeight
 
 	return selected
-}
-
-func getOIDFromCtx(ctx context.Context) (int64, error) {
-	md, ok := metadata.FromClientContext(ctx)
-	if !ok {
-		return 0, errors.New("metadata is not in context")
-	}
-
-	oid, err := strconv.ParseInt(md.Get(xcontext.CtxOID), 10, 64)
-	if err != nil {
-		return 0, errors.Wrapf(err, "oid is not int64")
-	}
-
-	return oid, nil
 }

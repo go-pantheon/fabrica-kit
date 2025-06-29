@@ -45,6 +45,16 @@ func Color(ctx context.Context) string {
 	return ""
 }
 
+func ColorFromOutgoingContext(ctx context.Context) string {
+	if md, ok := metadata.FromOutgoingContext(ctx); ok {
+		if vs := md.Get(string(CtxColor)); len(vs) > 0 {
+			return vs[0]
+		}
+	}
+
+	return ""
+}
+
 // SetUID adds the user ID to the client context.
 func SetUID(ctx context.Context, id int64) context.Context {
 	return metadata.AppendToOutgoingContext(ctx, CtxUID, strconv.FormatInt(id, 10))
@@ -117,6 +127,27 @@ func OIDOrZero(ctx context.Context) int64 {
 	}
 
 	return oid
+}
+
+func OIDFromOutgoingContext(ctx context.Context) (int64, error) {
+	md, ok := metadata.FromOutgoingContext(ctx)
+	if !ok {
+		return 0, errors.New("metadata not in context")
+	}
+
+	vs := md.Get(string(CtxOID))
+	if len(vs) == 0 {
+		return 0, errors.New("oid not in context")
+	}
+
+	str := vs[0]
+
+	id, err := strconv.ParseInt(str, 10, 64)
+	if err != nil {
+		return 0, errors.Wrapf(err, "oid must be int64, oid=%s", str)
+	}
+
+	return id, nil
 }
 
 // SetSID adds the server ID to the client context.
