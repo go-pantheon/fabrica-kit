@@ -57,7 +57,7 @@ func NewTracingPool(ctx context.Context, config *PostgreSQLConfig) (pool *pgxpoo
 	poolConfig := postgresql.NewConfig(config.DSN, config.DBName)
 	poolConfig.Tracer = otelpgx.NewTracer(opts...)
 
-	pool, cleanup, err = postgresql.New(poolConfig)
+	pool, cleanup, err = postgresql.NewPool(poolConfig)
 	if err != nil {
 		return nil, nil, errors.Wrap(err, "failed to create connection pool")
 	}
