@@ -8,7 +8,6 @@ import (
 	"github.com/go-pantheon/fabrica-util/data/db/postgresql"
 	"github.com/go-pantheon/fabrica-util/errors"
 	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgxpool"
 	"go.opentelemetry.io/otel/attribute"
 	semconv "go.opentelemetry.io/otel/semconv/v1.26.0"
 )
@@ -38,7 +37,7 @@ func DefaultPostgreSQLConfig(dbConfig postgresql.Config) *PostgreSQLConfig {
 	}
 }
 
-func NewTracingPool(ctx context.Context, config *PostgreSQLConfig) (pool *pgxpool.Pool, cleanup func(), err error) {
+func NewTracingDB(ctx context.Context, config *PostgreSQLConfig) (db *postgresql.DB, cleanup func(), err error) {
 	// Create tracer with options
 	var opts []otelpgx.Option
 
@@ -57,18 +56,18 @@ func NewTracingPool(ctx context.Context, config *PostgreSQLConfig) (pool *pgxpoo
 	poolConfig := postgresql.NewConfig(config.DSN, config.DBName)
 	poolConfig.Tracer = otelpgx.NewTracer(opts...)
 
-	pool, cleanup, err = postgresql.NewPool(poolConfig)
+	db, cleanup, err = postgresql.NewDBFromConfig(poolConfig)
 	if err != nil {
 		return nil, nil, errors.Wrap(err, "failed to create connection pool")
 	}
 
 	if !config.DisableMetrics {
-		if err := otelpgx.RecordStats(pool); err != nil {
+		if err := otelpgx.RecordStats(db.GetPool()); err != nil {
 			log.Warnf("Warning: failed to record pool stats: %v\n", err)
 		}
 	}
 
-	return pool, cleanup, nil
+	return db, cleanup, nil
 }
 
 // CreateTracer creates a pgx.QueryTracer for use with existing pools
