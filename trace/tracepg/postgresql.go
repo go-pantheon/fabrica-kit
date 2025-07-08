@@ -1,11 +1,11 @@
-package postgresql
+package tracepg
 
 import (
 	"context"
 
 	"github.com/exaring/otelpgx"
 	"github.com/go-kratos/kratos/v2/log"
-	"github.com/go-pantheon/fabrica-util/data/db/postgresql"
+	"github.com/go-pantheon/fabrica-util/data/db/pg"
 	"github.com/go-pantheon/fabrica-util/errors"
 	"github.com/jackc/pgx/v5"
 	"go.opentelemetry.io/otel/attribute"
@@ -14,7 +14,7 @@ import (
 
 // PostgreSQLConfig holds comprehensive configuration for PostgreSQL connection pool with tracing
 type PostgreSQLConfig struct {
-	postgresql.Config
+	pg.Config
 
 	// OpenTelemetry tracing options
 	IncludeQueryParameters bool
@@ -24,7 +24,7 @@ type PostgreSQLConfig struct {
 }
 
 // DefaultPostgreSQLConfig returns a default configuration with sensible defaults
-func DefaultPostgreSQLConfig(dbConfig postgresql.Config) *PostgreSQLConfig {
+func DefaultPostgreSQLConfig(dbConfig pg.Config) *PostgreSQLConfig {
 	return &PostgreSQLConfig{
 		Config:                 dbConfig,
 		IncludeQueryParameters: false,
@@ -37,7 +37,7 @@ func DefaultPostgreSQLConfig(dbConfig postgresql.Config) *PostgreSQLConfig {
 	}
 }
 
-func NewTracingDB(ctx context.Context, config *PostgreSQLConfig) (db *postgresql.DB, cleanup func(), err error) {
+func NewDB(ctx context.Context, config *PostgreSQLConfig) (db *pg.DB, cleanup func(), err error) {
 	// Create tracer with options
 	var opts []otelpgx.Option
 
@@ -53,10 +53,10 @@ func NewTracingDB(ctx context.Context, config *PostgreSQLConfig) (db *postgresql
 		opts = append(opts, otelpgx.WithDisableSQLStatementInAttributes())
 	}
 
-	poolConfig := postgresql.NewConfig(config.DSN, config.DBName)
+	poolConfig := pg.NewConfig(config.DSN, config.DBName)
 	poolConfig.Tracer = otelpgx.NewTracer(opts...)
 
-	db, cleanup, err = postgresql.NewDBFromConfig(poolConfig)
+	db, cleanup, err = pg.NewDBFromConfig(poolConfig)
 	if err != nil {
 		return nil, nil, errors.Wrap(err, "failed to create connection pool")
 	}
