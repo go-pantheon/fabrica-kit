@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/go-pantheon/fabrica-util/errors"
+	"github.com/go-pantheon/fabrica-util/xsync"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/metric"
@@ -317,20 +318,22 @@ func (m *Metrics) StartPeriodicStatsCollection(db *sql.DB, interval time.Duratio
 
 	ctx, cancel := context.WithCancel(context.Background())
 
-	go func() {
+	xsync.Go("metrics.postgresql.startPeriodicStatsCollection", func() error {
 		ticker := time.NewTicker(interval)
 		defer ticker.Stop()
 
 		for {
 			select {
 			case <-ctx.Done():
-				return
+				return ctx.Err()
 			case <-ticker.C:
 				stats := db.Stats()
 				m.RecordConnectionPoolStats(stats)
 			}
 		}
-	}()
+
+		return nil
+	})
 
 	return cancel
 }
