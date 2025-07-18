@@ -7,9 +7,8 @@ import (
 	"context"
 	"strconv"
 
-	metadata "github.com/go-kratos/kratos/v2/metadata"
+	"github.com/go-kratos/kratos/v2/metadata"
 	"github.com/pkg/errors"
-	metadatago "google.golang.org/grpc/metadata"
 )
 
 // Context is the context of the game
@@ -28,8 +27,18 @@ const (
 // Keys is a list of all context metadata keys used in the system.
 var Keys = []string{CtxSID, CtxUID, CtxOID, CtxStatus, CtxColor, CtxReferer, CtxClientIP, CtxGateReferer}
 
-func AppendToOutgoingContext(ctx context.Context, kv ...string) context.Context {
-	return metadatago.AppendToOutgoingContext(ctx, kv...)
+func AppendToClientContext(ctx context.Context, kv ...string) context.Context {
+	if len(kv)%2 != 0 {
+		panic("append to client context: kv must be even")
+	}
+
+	mds := make(map[string][]string, len(kv)/2)
+
+	for i := 0; i < len(kv); i += 2 {
+		mds[kv[i]] = []string{kv[i+1]}
+	}
+
+	return metadata.MergeToClientContext(ctx, metadata.New(mds))
 }
 
 func AppendToServerContext(ctx context.Context, kv ...string) context.Context {
@@ -51,36 +60,6 @@ func AppendToServerContext(ctx context.Context, kv ...string) context.Context {
 	}
 
 	return metadata.NewServerContext(ctx, md)
-}
-
-func AppendIncommingToServerContext(ctx context.Context) context.Context {
-	mds := make(map[string][]string, len(Keys))
-
-	for _, key := range Keys {
-		md, ok := metadatago.FromIncomingContext(ctx)
-		if !ok {
-			continue
-		}
-
-		mds[key] = md.Get(key)
-	}
-
-	return metadata.NewServerContext(ctx, metadata.New(mds))
-}
-
-func AppendOutgoingToClientContext(ctx context.Context) context.Context {
-	mds := make(map[string][]string, len(Keys))
-
-	for _, key := range Keys {
-		md, ok := metadatago.FromOutgoingContext(ctx)
-		if !ok {
-			continue
-		}
-
-		mds[key] = md.Get(key)
-	}
-
-	return metadata.MergeToClientContext(ctx, metadata.New(mds))
 }
 
 // Color retrieves the color information from the server context.
@@ -211,32 +190,25 @@ func GateReferer(ctx context.Context) string {
 	return md.Get(string(CtxGateReferer))
 }
 
-func ColorFromOutgoingContext(ctx context.Context) string {
-	if md, ok := metadatago.FromOutgoingContext(ctx); ok {
-		if vs := md.Get(string(CtxColor)); len(vs) > 0 {
-			return vs[0]
-		}
+func ColorFromClientContext(ctx context.Context) string {
+	if md, ok := metadata.FromClientContext(ctx); ok {
+		return md.Get(string(CtxColor))
 	}
 
 	return ""
 }
 
-func OIDFromOutgoingContext(ctx context.Context) (int64, error) {
-	md, ok := metadatago.FromOutgoingContext(ctx)
+func OIDFromClientContext(ctx context.Context) (int64, error) {
+	md, ok := metadata.FromClientContext(ctx)
 	if !ok {
 		return 0, errors.New("metadata not in context")
 	}
 
-	vs := md.Get(string(CtxOID))
-	if len(vs) == 0 {
-		return 0, errors.New("oid not in context")
-	}
+	v := md.Get(string(CtxOID))
 
-	str := vs[0]
-
-	id, err := strconv.ParseInt(str, 10, 64)
+	id, err := strconv.ParseInt(v, 10, 64)
 	if err != nil {
-		return 0, errors.Wrapf(err, "oid must be int64, oid=%s", str)
+		return 0, errors.Wrapf(err, "oid must be int64, oid=%s", v)
 	}
 
 	return id, nil

@@ -15,7 +15,7 @@ func NewFilter() selector.NodeFilter {
 		newNodes := make([]selector.Node, 0, len(nodes))
 
 		for _, n := range nodes {
-			if n.Metadata()[profile.ColorKey] == xcontext.ColorFromOutgoingContext(ctx) {
+			if n.Metadata()[profile.ColorKey] == xcontext.ColorFromClientContext(ctx) {
 				newNodes = append(newNodes, n)
 			}
 		}

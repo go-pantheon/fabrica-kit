@@ -39,12 +39,12 @@ func (p *weightBalancer) Pick(ctx context.Context, nodes []selector.WeightedNode
 		return nil, nil, selector.ErrNoAvailable
 	}
 
-	oid, err := xcontext.OIDFromOutgoingContext(ctx)
+	oid, err := xcontext.OIDFromClientContext(ctx)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	color := xcontext.ColorFromOutgoingContext(ctx)
+	color := xcontext.ColorFromClientContext(ctx)
 
 	// select node by oid from routeTable
 	addr, err := p.routeTable.Get(ctx, color, oid)
