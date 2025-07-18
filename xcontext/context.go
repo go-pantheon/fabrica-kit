@@ -9,6 +9,7 @@ import (
 
 	"github.com/go-kratos/kratos/v2/metadata"
 	"github.com/pkg/errors"
+	grpcmd "google.golang.org/grpc/metadata"
 )
 
 // Context is the context of the game
@@ -190,26 +191,30 @@ func GateReferer(ctx context.Context) string {
 	return md.Get(string(CtxGateReferer))
 }
 
-func ColorFromClientContext(ctx context.Context) string {
-	if md, ok := metadata.FromClientContext(ctx); ok {
-		return md.Get(string(CtxColor))
+func ColorFromOutgoingContext(ctx context.Context) string {
+	if md, ok := grpcmd.FromOutgoingContext(ctx); ok {
+		if v := md.Get(string(CtxColor)); len(v) > 0 {
+			return v[0]
+		}
 	}
 
 	return ""
 }
 
-func OIDFromClientContext(ctx context.Context) (int64, error) {
-	md, ok := metadata.FromClientContext(ctx)
+func OIDFromOutgoingContext(ctx context.Context) (int64, error) {
+	md, ok := grpcmd.FromOutgoingContext(ctx)
 	if !ok {
 		return 0, errors.New("metadata not in context")
 	}
 
-	v := md.Get(string(CtxOID))
+	if v := md.Get(string(CtxOID)); len(v) > 0 {
+		id, err := strconv.ParseInt(v[0], 10, 64)
+		if err != nil {
+			return 0, errors.Wrapf(err, "oid must be int64, oid=%s", v[0])
+		}
 
-	id, err := strconv.ParseInt(v, 10, 64)
-	if err != nil {
-		return 0, errors.Wrapf(err, "oid must be int64, oid=%s", v)
+		return id, nil
 	}
 
-	return id, nil
+	return 0, errors.New("oid not found")
 }
