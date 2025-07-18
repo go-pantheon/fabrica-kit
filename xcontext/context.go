@@ -63,6 +63,26 @@ func AppendToServerContext(ctx context.Context, kv ...string) context.Context {
 	return metadata.NewServerContext(ctx, md)
 }
 
+func TransferToServerContext(ctx context.Context) context.Context {
+	md, ok := grpcmd.FromIncomingContext(ctx)
+	if !ok {
+		return ctx
+	}
+
+	smd, ok := metadata.FromServerContext(ctx)
+	if !ok {
+		return metadata.NewServerContext(ctx, metadata.New(md))
+	}
+
+	for k, v := range md {
+		for _, vv := range v {
+			smd.Add(k, vv)
+		}
+	}
+
+	return metadata.NewServerContext(ctx, smd)
+}
+
 // Color retrieves the color information from the server context.
 func Color(ctx context.Context) string {
 	if md, ok := metadata.FromServerContext(ctx); ok {
