@@ -9,7 +9,6 @@ import (
 	"github.com/go-kratos/kratos/v2/transport"
 	"github.com/go-kratos/kratos/v2/transport/http"
 	"github.com/go-pantheon/fabrica-kit/xcontext"
-	"google.golang.org/grpc/metadata"
 )
 
 func Server(l log.Logger) middleware.Middleware {
@@ -26,11 +25,10 @@ func TransformContext(ctx context.Context) context.Context {
 		pairs := make([]string, 0, len(xcontext.Keys))
 
 		for _, k := range xcontext.Keys {
-			v := info.RequestHeader().Get(k)
-			pairs = append(pairs, k, v)
+			pairs = append(pairs, k, info.RequestHeader().Get(k))
 		}
 
-		ctx = metadata.NewIncomingContext(ctx, metadata.Pairs(pairs...))
+		ctx = xcontext.AppendToServerContext(ctx, pairs...)
 	}
 
 	return ctx
@@ -49,5 +47,5 @@ func IsAdminPath(ctx context.Context) bool {
 		return false
 	}
 
-	return strings.Index(info.Request().RequestURI, adminURIPrefix) == 0
+	return strings.HasPrefix(info.Request().RequestURI, adminURIPrefix)
 }

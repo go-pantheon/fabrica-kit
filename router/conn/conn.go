@@ -12,17 +12,17 @@ import (
 	"github.com/go-kratos/kratos/v2/middleware/recovery"
 	"github.com/go-kratos/kratos/v2/middleware/tracing"
 	"github.com/go-kratos/kratos/v2/registry"
-	kgrpc "github.com/go-kratos/kratos/v2/transport/grpc"
+	"github.com/go-kratos/kratos/v2/transport/grpc"
 	"github.com/go-pantheon/fabrica-kit/metrics"
 	"github.com/go-pantheon/fabrica-kit/router/balancer"
 	"github.com/go-pantheon/fabrica-kit/router/routetable"
 	"github.com/go-pantheon/fabrica-util/errors"
-	"google.golang.org/grpc"
+	grpcgo "google.golang.org/grpc"
 )
 
 // Conn is a wrapper around a gRPC client connection interface.
 type Conn struct {
-	grpc.ClientConnInterface
+	grpcgo.ClientConnInterface
 }
 
 // NewConn creates a new gRPC client connection with the specified service name, balancer type,
@@ -43,15 +43,15 @@ func NewConn(serviceName string, balancerType balancer.Type, logger log.Logger, 
 		return nil, errors.Errorf("invalid balancer type: %s", balancerType)
 	}
 
-	conn, err := kgrpc.DialInsecure(
+	conn, err := grpc.DialInsecure(
 		context.Background(),
-		kgrpc.WithEndpoint(fmt.Sprintf("discovery:///%s", serviceName)),
-		kgrpc.WithDiscovery(r),
-		kgrpc.WithNodeFilter(balancer.NewFilter()),
-		kgrpc.WithOptions(
-			grpc.WithDefaultServiceConfig(fmt.Sprintf(`{"loadBalancingConfig": [{"%s":{}}]}`, string(balancerType))),
+		grpc.WithEndpoint(fmt.Sprintf("discovery:///%s", serviceName)),
+		grpc.WithDiscovery(r),
+		grpc.WithNodeFilter(balancer.NewFilter()),
+		grpc.WithOptions(
+			grpcgo.WithDefaultServiceConfig(fmt.Sprintf(`{"loadBalancingConfig": [{"%s":{}}]}`, string(balancerType))),
 		),
-		kgrpc.WithMiddleware(
+		grpc.WithMiddleware(
 			recovery.Recovery(),
 			metadata.Client(),
 			tracing.Client(),
