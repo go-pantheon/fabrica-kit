@@ -4,7 +4,10 @@ package routetable
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"strconv"
+	"strings"
 	"time"
 )
 
@@ -39,12 +42,14 @@ type ReNewalRouteTable interface {
 type ReadOnlyRouteTable interface {
 	BuildKey(color string, oid int64) string
 	Get(ctx context.Context, color string, key int64) (addr string, err error)
+	BatchGet(ctx context.Context, color string, keys []int64) (addrs []string, err error)
 }
 
 // Data is an interface for the underlying data storage of route tables.
 type Data interface {
 	Get(ctx context.Context, key string) (addr string, err error)
 	GetEx(ctx context.Context, key string, ttl time.Duration) (addr string, err error)
+	BatchGet(ctx context.Context, keys []string) (addrs []string, err error)
 	Set(ctx context.Context, key, addr string, ttl time.Duration) error
 	SetNxOrGet(ctx context.Context, key, addr string, ttl time.Duration) (set bool, ret string, err error)
 	GetSet(ctx context.Context, key, addr string, ttl time.Duration) (old string, err error)
@@ -54,6 +59,23 @@ type Data interface {
 	DelIfSame(ctx context.Context, key, value string) error
 }
 
-func key(name, color string, oid int64) string {
+func Key(name, color string, oid int64) string {
 	return fmt.Sprintf("r_%s_{%s}_{%d}", name, color, oid)
+}
+
+func SplitKey(key string) (name, color string, oid int64, err error) {
+	parts := strings.Split(key, "_")
+	if len(parts) != 4 {
+		return "", "", 0, errors.New("invalid key")
+	}
+
+	color = strings.Trim(strings.Trim(parts[2], "{"), "}")
+
+	oidStr := strings.Trim(strings.Trim(parts[3], "{"), "}")
+	oid, err = strconv.ParseInt(oidStr, 10, 64)
+	if err != nil {
+		return "", "", 0, err
+	}
+
+	return parts[1], color, oid, nil
 }

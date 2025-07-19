@@ -331,8 +331,6 @@ func (m *Metrics) StartPeriodicStatsCollection(db *sql.DB, interval time.Duratio
 				m.RecordConnectionPoolStats(stats)
 			}
 		}
-
-		return nil
 	})
 
 	return cancel

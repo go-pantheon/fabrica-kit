@@ -49,6 +49,24 @@ func (r *RouteTable) GetEx(ctx context.Context, key string, exp time.Duration) (
 	return val, nil
 }
 
+func (r *RouteTable) BatchGet(ctx context.Context, keys []string) (addrs []string, err error) {
+	vals, err := r.client.MGet(ctx, keys...).Result()
+	if err != nil {
+		return nil, errors.Wrapf(err, "batch get route table failed")
+	}
+
+	addrs = make([]string, 0, len(vals))
+	for _, val := range vals {
+		if val == nil {
+			addrs = append(addrs, "")
+		} else {
+			addrs = append(addrs, val.(string))
+		}
+	}
+
+	return addrs, nil
+}
+
 // GetSet atomically sets a new value and returns the old value.
 func (r *RouteTable) GetSet(ctx context.Context, key, val string, expire time.Duration) (string, error) {
 	cmd := r.client.GetSet(ctx, key, val)
